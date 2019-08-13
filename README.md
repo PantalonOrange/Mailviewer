@@ -3,7 +3,7 @@
 This program view mails via imap and tls connection.
 Autorefresh is included.
 
-These program uss the socket header from the socket api owned by scott klement  
+These programs use the socket header from the socket api owned by scott klement  
 -> https://www.scottklement.com/rpg/socktut/socktut.savf  
 
 All copyfiles are included (QRPGLECPY)
