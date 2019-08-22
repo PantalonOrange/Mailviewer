@@ -1,9 +1,9 @@
 # MailViewer
 
-This program view mails via imap and tls connection.
-Autorefresh is included.
+With this program you can view mails via imap and tls connection.
+Autorefreshing display is included.
 
-These programs use the socket header from the socket api owned by scott klement  
+This program uses the socket header from the socket api owned by scott klement  
 -> https://www.scottklement.com/rpg/socktut/socktut.savf  
 
 All copyfiles are included (QRPGLECPY)
