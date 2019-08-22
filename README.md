@@ -1,6 +1,6 @@
 # MailViewer
 
-With this program you can view mails via imap and tls connection.
+With this program you can view mails via imap and tls (IBM GSK) connection.
 Autorefreshing display is included.
 
 This program uses the socket header from the socket api owned by scott klement  
