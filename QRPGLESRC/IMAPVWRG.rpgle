@@ -38,24 +38,24 @@ DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
 
 /INCLUDE QRPGLECPY,PSDS
 DCL-DS WSDS QUALIFIED;
- Exit IND POS(3);
- Refresh IND POS(5);
- ReConnect IND POS(6);
- CommandLine IND POS(9);
- Cancel IND POS(12);
- SubfileClear IND POS(20);
- SubfileDisplayControl IND POS(21);
- SubfileDisplay IND POS(22);
- SubfileMore IND POS(23);
+  Exit IND POS(3);
+  Refresh IND POS(5);
+  ReConnect IND POS(6);
+  CommandLine IND POS(9);
+  Cancel IND POS(12);
+  SubfileClear IND POS(20);
+  SubfileDisplayControl IND POS(21);
+  SubfileDisplay IND POS(22);
+  SubfileMore IND POS(23);
 END-DS;
 
 
 DCL-PR Main EXTPGM('IMAPVWRG');
- Host CHAR(16) CONST;
- User CHAR(32) CONST;
- Password CHAR(32) CONST;
- UseTLS IND CONST;
- Seconds PACKED(2 :0) CONST;
+  Host CHAR(16) CONST;
+  User CHAR(32) CONST;
+  Password CHAR(32) CONST;
+  UseTLS IND CONST;
+  Seconds PACKED(2 :0) CONST;
 END-PR;
 
 
@@ -82,53 +82,53 @@ DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
 DCL-S RecNum UNS(10) INZ;
 DCL-DS This QUALIFIED;
- PictureControl CHAR(1) INZ(FM_A);
- RefreshSeconds PACKED(2 :0) INZ;
- GlobalMessage CHAR(130) INZ;
- RecordsFound UNS(10) INZ;
- Connected IND INZ(FALSE);
- LoginDataDS LIKEDS(LogInDataDS_T) INZ;
- SocketDS LIKEDS(SocketDS_T) INZ;
- GSKDS LIKEDS(GSKDS_T) INZ;
+  PictureControl CHAR(1) INZ(FM_A);
+  RefreshSeconds PACKED(2 :0) INZ;
+  GlobalMessage CHAR(130) INZ;
+  RecordsFound UNS(10) INZ;
+  Connected IND INZ(FALSE);
+  LoginDataDS LIKEDS(LogInDataDS_T) INZ;
+  SocketDS LIKEDS(SocketDS_T) INZ;
+  GSKDS LIKEDS(GSKDS_T) INZ;
 END-DS;
 
 DCL-DS LogInDataDS_T QUALIFIED TEMPLATE;
- Host CHAR(16);
- User CHAR(32);
- Password CHAR(32);
- UseTLS IND;
+  Host CHAR(16);
+  User CHAR(32);
+  Password CHAR(32);
+  UseTLS IND;
 END-DS;
 DCL-DS SocketDS_T QUALIFIED TEMPLATE;
- ConnectTo POINTER;
- SocketHandler INT(10);
- Address UNS(10);
- AddressLength INT(10);
+  ConnectTo POINTER;
+  SocketHandler INT(10);
+  Address UNS(10);
+  AddressLength INT(10);
 END-DS;
 DCL-DS GSKDS_T QUALIFIED TEMPLATE;
   Environment POINTER;
   SecureHandler POINTER;
 END-DS;
 DCL-DS MailDS_T QUALIFIED TEMPLATE;
- Sender CHAR(128);
- SendDate CHAR(25);
- Subject CHAR(1024);
- UnseenFlag IND;
+  Sender CHAR(128);
+  SendDate CHAR(25);
+  Subject CHAR(1024);
+  UnseenFlag IND;
 END-DS;
 DCL-DS MessageHandlingDS_T QUALIFIED TEMPLATE;
- Length INT(10);
- Key CHAR(4);
- Error CHAR(128);
+  Length INT(10);
+  Key CHAR(4);
+  Error CHAR(128);
 END-DS;
 
 
 //#########################################################################
 DCL-PROC Main;
  DCL-PI *N;
-  pHost CHAR(16) CONST;
-  pUser CHAR(32) CONST;
-  pPassword CHAR(32) CONST;
-  pUseTLS IND CONST;
-  pSeconds PACKED(2 :0) CONST;
+   pHost CHAR(16) CONST;
+   pUser CHAR(32) CONST;
+   pPassword CHAR(32) CONST;
+   pUseTLS IND CONST;
+   pSeconds PACKED(2 :0) CONST;
  END-PI;
  //------------------------------------------------------------------------
 
@@ -165,11 +165,11 @@ END-PROC;
 //**************************************************************************
 DCL-PROC loopFM_A;
  DCL-PI *N;
-  pHost CHAR(16) CONST;
-  pUser CHAR(32) CONST;
-  pPassword CHAR(32) CONST;
-  pUseTLS IND CONST;
-  pSeconds PACKED(2 :0) CONST;
+   pHost CHAR(16) CONST;
+   pUser CHAR(32) CONST;
+   pPassword CHAR(32) CONST;
+   pUseTLS IND CONST;
+   pSeconds PACKED(2 :0) CONST;
  END-PI;
 
  /INCLUDE QRPGLECPY,QRCVDTAQ
@@ -177,8 +177,8 @@ DCL-PROC loopFM_A;
  DCL-S Success IND INZ(TRUE);
 
  DCL-DS IncomingData QUALIFIED INZ;
-  Data CHAR(80);
-  Length PACKED(5 :0);
+   Data CHAR(80);
+   Length PACKED(5 :0);
  END-DS;
 
  DCL-DS FMA LIKEREC(IMAPVWAC :*ALL) INZ;
@@ -241,11 +241,11 @@ END-PROC;
 //**************************************************************************
 DCL-PROC initFM_A;
  DCL-PI *N IND;
-  pHost CHAR(16) CONST;
-  pUser CHAR(32) CONST;
-  pPassword CHAR(32) CONST;
-  pUseTLS IND CONST;
-  pSeconds PACKED(2 :0) CONST;
+   pHost CHAR(16) CONST;
+   pUser CHAR(32) CONST;
+   pPassword CHAR(32) CONST;
+   pUseTLS IND CONST;
+   pSeconds PACKED(2 :0) CONST;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
@@ -302,12 +302,12 @@ DCL-PROC fetchRecordsFM_A;
 
  DCL-DS MailDS LIKEDS(MailDS_T) DIM(MAX_ROWS_TO_FETCH);
  DCL-DS SubfileDS QUALIFIED INZ;
-  Color1 CHAR(1);
-  Sender CHAR(40);
-  Color2 CHAR(3);
-  SendDate CHAR(25);
-  Color3 CHAR(3);
-  Subject CHAR(50);
+   Color1 CHAR(1);
+   Sender CHAR(40);
+   Color2 CHAR(3);
+   SendDate CHAR(25);
+   Color3 CHAR(3);
+   Subject CHAR(50);
  END-DS;
  //-------------------------------------------------------------------------
 
@@ -482,7 +482,7 @@ DCL-PROC connectToHost;
      Success = FALSE;
    EndIf;
 
-   If This.LogInDataDS.UseTLS;
+   If Success And This.LogInDataDS.UseTLS;
      This.LogInDataDS.UseTLS = initGSKEnvironment();
    EndIf;
  EndIf;
@@ -652,7 +652,7 @@ END-PROC;
 //**************************************************************************
 DCL-PROC readMailsFromInbox;
  DCL-PI *N IND;
-  pMailDS LIKEDS(MailDS_T) DIM(MAX_ROWS_TO_FETCH);
+   pMailDS LIKEDS(MailDS_T) DIM(MAX_ROWS_TO_FETCH);
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
@@ -713,7 +713,7 @@ END-PROC;
 //**************************************************************************
 DCL-PROC extractFieldsFromStream;
  DCL-PI *N LIKEDS(MailDS_T);
-  pData CHAR(16384) CONST;
+   pData CHAR(16384) CONST;
  END-PI;
 
  DCL-S s UNS(10) INZ;
@@ -823,26 +823,26 @@ END-PROC;
 //**************************************************************************
 DCL-PROC translateData;
  DCL-PI *N CHAR(1024);
-  pStream CHAR(1024) CONST;
-  pFromCCSID INT(10) CONST;
-  pToCCSID INT(10) CONST;
+   pStream CHAR(1024) CONST;
+   pFromCCSID INT(10) CONST;
+   pToCCSID INT(10) CONST;
  END-PI;
 
  DCL-PR iConv_Open LIKE(ToASCII) EXTPROC('QtqIconvOpen');
-  ToCode LIKE(FromDS);
-  FromCode LIKE(ToDS);
+   ToCode LIKE(FromDS);
+   FromCode LIKE(ToDS);
  END-PR;
 
  DCL-PR iConv INT(10) EXTPROC('iconv');
-  Descriptor LIKE(ToASCII) VALUE;
-  InBuff POINTER;
-  InLeft UNS(10);
-  OutBuffer POINTER;
-  OutLeft UNS(10);
+   Descriptor LIKE(ToASCII) VALUE;
+   InBuff POINTER;
+   InLeft UNS(10);
+   OutBuffer POINTER;
+   OutLeft UNS(10);
  END-PR;
 
  DCL-PR iConv_Close INT(10) EXTPROC('iconv_close');
-  Descriptor LIKE(ToASCII) VALUE;
+   Descriptor LIKE(ToASCII) VALUE;
  END-PR;
 
  DCL-S ConvHandler POINTER;
@@ -850,28 +850,28 @@ DCL-PROC translateData;
  DCL-S Result CHAR(1024) INZ;
 
  DCL-DS ToASCII QUALIFIED INZ;
-  ICORV_A INT(10);
-  ICOC_A INT(10) DIM(12);
+   ICORV_A INT(10);
+   ICOC_A INT(10) DIM(12);
  END-DS;
 
  DCL-DS FromDS QUALIFIED;
-  FromCCSID INT(10) INZ;
-  CA INT(10) INZ;
-  SA INT(10) INZ;
-  SS INT(10) INZ;
-  IL INT(10) INZ;
-  EO INT(10) INZ;
-  R CHAR(8) INZ(*ALLX'00');
+   FromCCSID INT(10) INZ;
+   CA INT(10) INZ;
+   SA INT(10) INZ;
+   SS INT(10) INZ;
+   IL INT(10) INZ;
+   EO INT(10) INZ;
+   R CHAR(8) INZ(*ALLX'00');
  END-DS;
 
  DCL-DS ToDS QUALIFIED;
-  ToCCSID INT(10) INZ;
-  CA INT(10) INZ;
-  SA INT(10) INZ;
-  SS INT(10) INZ;
-  IL INT(10) INZ;
-  EO INT(10) INZ;
-  R CHAR(8) INZ(*ALLX'00');
+   ToCCSID INT(10) INZ;
+   CA INT(10) INZ;
+   SA INT(10) INZ;
+   SS INT(10) INZ;
+   IL INT(10) INZ;
+   EO INT(10) INZ;
+   R CHAR(8) INZ(*ALLX'00');
  END-DS;
  //-------------------------------------------------------------------------
 
