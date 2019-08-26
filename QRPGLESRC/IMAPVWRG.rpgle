@@ -21,6 +21,12 @@
 
 //  Created by BRC on 09.08.2019
 
+//  CAUTION: PRE-ALPHA!
+
+// Simple imap client
+//   I use the socket_h header from scott klement - (c) Scott Klement
+//   https://www.scottklement.com/rpg/socktut/socktut.savf
+
 
 /INCLUDE QRPGLECPY,H_SPECS
 CTL-OPT MAIN(Main);
