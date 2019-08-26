@@ -21,10 +21,9 @@
 
 //  Created by BRC on 09.08.2019
 
-//  PRE-ALPHA !!!
-
 
 /INCLUDE QRPGLECPY,H_SPECS
+CTL-OPT MAIN(Main);
 
 
 DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
@@ -35,7 +34,7 @@ DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
 DCL-DS WSDS QUALIFIED;
  Exit IND POS(3);
  Refresh IND POS(5);
- Reconnect IND POS(6);
+ ReConnect IND POS(6);
  CommandLine IND POS(9);
  Cancel IND POS(12);
  SubfileClear IND POS(20);
@@ -72,6 +71,7 @@ DCL-C MAX_ROWS_TO_FETCH 60;
 DCL-C LOCAL 0;
 DCL-C UTF8 1208;
 DCL-C CRLF X'0D25';
+DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
 
 DCL-S RecNum UNS(10) INZ;
@@ -176,7 +176,7 @@ DCL-PROC loopFM_A;
  END-DS;
 
  DCL-DS FMA LIKEREC(IMAPVWAC :*ALL) INZ;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  Success = initFM_A(pHost :pUser :pPassword :pUseTLS :pSeconds);
 
@@ -185,7 +185,7 @@ DCL-PROC loopFM_A;
  DoW ( This.PictureControl = FM_A );
 
 
-   AFLin01 = 'Autorefresh: ' + %Char(This.RefreshSeconds) + 's';
+   AFLin01 = %TrimR(retrieveMessageText('C000005')) + ' ' + %Char(This.RefreshSeconds) + 's';
    AC_Refresh = This.RefreshSeconds;
 
    Write IMAPVWAF;
@@ -215,13 +215,13 @@ DCL-PROC loopFM_A;
      When ( WSDS.Refresh );
        fetchRecordsFM_A();
 
-     When ( WSDS.Reconnect );
-       If reconnectToHost();
+     When ( WSDS.ReConnect );
+       If reConnectToHost();
          fetchRecordsFM_A();
        EndIf;
 
-     When ( WSDS.CommandLine = TRUE );
-       pmtCmdLin();
+     When ( WSDS.CommandLine );
+       promtCommandLine();
 
      Other;
        fetchRecordsFM_A();
@@ -230,8 +230,8 @@ DCL-PROC loopFM_A;
 
  EndDo;
 
-END-PROC;
 
+END-PROC;
 //**************************************************************************
 DCL-PROC initFM_A;
  DCL-PI *N IND;
@@ -243,7 +243,7 @@ DCL-PROC initFM_A;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  Reset RecNum;
  Clear IMAPVWAC;
@@ -275,17 +275,19 @@ DCL-PROC initFM_A;
  If Success;
    This.Connected = connectToHost();
    Success = This.Connected;
- EndIf;
-
- AC_Mail = This.LogInDataDS.User;
- If ( This.LogInDataDS.UseTLS );
-   AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
+   If Success;
+     AC_Mail = This.LogInDataDS.User;
+     If ( This.LogInDataDS.UseTLS );
+       AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
+     EndIf;
+   Else;
+     AC_Mail = retrieveMessageText('M000003');
+   EndIf;
  EndIf;
 
  Return Success;
 
 END-PROC;
-
 //**************************************************************************
 DCL-PROC fetchRecordsFM_A;
 
@@ -301,7 +303,7 @@ DCL-PROC fetchRecordsFM_A;
   Color3 CHAR(3);
   Subject CHAR(50);
  END-DS;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  Reset RecNum;
 
@@ -312,7 +314,7 @@ DCL-PROC fetchRecordsFM_A;
  Write(E) IMAPVWAC;
 
  If This.Connected;
-   sendStatus('Read inbox, please wait...');
+   sendStatus(retrieveMessageText('M000000'));
    Success = readMailsFromInbox(MailDS);
  EndIf;
 
@@ -361,13 +363,12 @@ DCL-PROC fetchRecordsFM_A;
 
 END-PROC;
 
-
 //**************************************************************************
 DCL-PROC askForLoginData;
  DCL-PI *N IND END-PI;
 
  DCL-S Success IND INZ(TRUE);
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  W0_Host = This.LogInDataDS.Host;
  W0_User = This.LogInDataDS.User;
@@ -427,9 +428,9 @@ DCL-PROC connectToHost;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(1024) INZ;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
- sendStatus('Connect to host, please wait...');
+ sendStatus(retrieveMessageText('M000001'));
 
  This.SocketDS.Address = inet_Addr(%TrimR(This.LogInDataDS.Host));
  If ( This.SocketDS.Address = INADDR_NONE );
@@ -498,7 +499,7 @@ DCL-PROC connectToHost;
        Data = translateData(Data :UTF8 :LOCAL);
        This.Connected = ( %Scan('OK' :Data) > 0 );
        If Not This.Connected;
-         This.GlobalMessage = 'Wrong login data';
+         This.GlobalMessage = retrieveMessageText('E000000');
          disconnectFromHost();
          Success = This.Connected;
        EndIf;
@@ -519,7 +520,7 @@ END-PROC;
 DCL-PROC disconnectFromHost;
 
  DCL-S Data CHAR(32) INZ;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  Data = 'a LOGOUT' + CRLF;
  translateData(Data :LOCAL :UTF8);
@@ -531,11 +532,11 @@ END-PROC;
 
 
 //**************************************************************************
-DCL-PROC reconnectToHost;
+DCL-PROC reConnectToHost;
  DCL-PI *N IND END-PI;
 
  DCL-S Success IND INZ(TRUE);
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  If This.Connected;
    disconnectFromHost();
@@ -560,7 +561,7 @@ DCL-PROC generateGSKEnvironment;
 
  DCL-S Success IND INZ(TRUE);
  DCL-S RC INT(10) INZ;
- //-------------------------------------------------------------------------
+ //--------------------------------------------------------------------------
 
  RC = gsk_Environment_Open(This.GSKDS.Environment);
  If ( RC <> GSK_OK );
@@ -599,9 +600,9 @@ DCL-PROC initGSKEnvironment;
 
  DCL-S Success IND INZ(TRUE);
  DCL-S RC INT(10) INZ;
- //-------------------------------------------------------------------------
+ //--------------------------------------------------------------------------
 
- sendStatus('Try to make a handshake with the server ...');
+ sendStatus(retrieveMessageText('M000002'));
  RC = gsk_Secure_Soc_Open(This.GSKDS.Environment :This.GSKDS.SecureHandler);
  If ( RC <> GSK_OK );
    cleanUp_Socket();
@@ -654,7 +655,7 @@ DCL-PROC readMailsFromInbox;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(16384) INZ;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  Data = 'a EXAMINE INBOX' + CRLF;
  Data = translateData(Data :LOCAL :UTF8);
@@ -666,7 +667,7 @@ DCL-PROC readMailsFromInbox;
  Else;
    Data = translateData(Data :UTF8 :LOCAL);
    If ( %Scan('NO EXAMINE' :Data) > 0 );
-     This.GlobalMessage = 'Mailbox not found';
+     This.GlobalMessage = retrieveMessageText('E000001');
      Success = FALSE;
    Else;
      Monitor;
@@ -713,7 +714,7 @@ DCL-PROC extractFieldsFromStream;
  DCL-S e UNS(10) INZ;
 
  DCL-DS MailDS LIKEDS(MailDS_T) INZ;
- //------------------------------------------------------------------------
+ //-------------------------------------------------------------------------
 
  s = %Scan('From:' :pData) + 6;
  e = %Scan(CRLF :pData :s) - 1;
@@ -756,7 +757,7 @@ DCL-PROC sendData;
  DCL-S RC INT(10) INZ;
  DCL-S GSKLength INT(10) INZ;
  DCL-S Buffer CHAR(32766) BASED(pData);
- //-------------------------------------------------------------------------
+ //--------------------------------------------------------------------------
 
  If This.LogInDataDS.UseTLS;
    RC = gsk_Secure_Soc_Write(This.GSKDS.SecureHandler :%Addr(Buffer) :pLength :GSKLength);
@@ -784,7 +785,7 @@ DCL-PROC recieveData;
  DCL-S RC INT(10) INZ;
  DCL-S GSKLength INT(10) INZ;
  DCL-S Buffer CHAR(32766) BASED(pData);
- //-------------------------------------------------------------------------
+ //--------------------------------------------------------------------------
 
  If This.LogInDataDS.UseTLS;
    RC = gsk_Secure_Soc_Read(This.GSKDS.SecureHandler :%Addr(Buffer) :pLength :GSKLength);
@@ -898,6 +899,40 @@ DCL-PROC sendStatus;
    sendProgramMessage('CPF9897'  :'QCPFMSG   *LIBL' :pMessage :MessageDS.Length
                       :'*STATUS' :'*EXT' :0 :MessageDS.Key :MessageDS.Error);
  EndIf;
+
+END-PROC;
+
+
+//**************************************************************************
+DCL-PROC retrieveMessageText;
+ DCL-PI *N CHAR(256);
+   pMessageID CHAR(7) CONST;
+   pMessageData CHAR(16) CONST OPTIONS(*NOPASS);
+ END-PI;
+
+ /INCLUDE QRPGLECPY,QMHRTVM
+
+ DCL-S MessageData CHAR(16) INZ;
+ DCL-S Error CHAR(128) INZ;
+ DCL-DS RTVM0100 LIKEDS(RTVM0100_T) INZ;
+ //-------------------------------------------------------------------------
+
+ If ( %Parms() = 1 );
+   Clear MessageData;
+ Else;
+   MessageData = pMessageData;
+ EndIf;
+
+ retrieveMessageData(RTVM0100 :%Size(RTVM0100) :'RTVM0100' :pMessageID :IMAPMSG :MessageData
+                     :%Len(%TrimR(MessageData)) :'*YES' :'*NO' :Error);
+
+ If ( RTVM0100.BytesMessageReturn > 0 );
+   RTVM0100.MessageAndHelp = %SubSt(RTVM0100.MessageAndHelp :1 :RTVM0100.BytesMessageReturn);
+ Else;
+   Clear RTVM0100;
+ EndIf;
+
+ Return %SubSt(RTVM0100.MessageAndHelp :1 :256);
 
 END-PROC;
 

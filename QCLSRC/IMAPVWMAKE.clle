@@ -1,0 +1,94 @@
+             PGM
+
+             DCLPRCOPT  USRPRF(*OWNER) AUT(*USE) DFTACTGRP(*NO) +
+                          ACTGRP(*NEW)
+             DCL        VAR(&LIB) TYPE(*CHAR) LEN(10) VALUE('LIB')
+             DCL        VAR(&SRC) TYPE(*CHAR) LEN(10) VALUE('SRCLIB')
+
+/* Check library */
+             CHKOBJ     OBJ(QSYS/&SRC) OBJTYPE(*LIB)
+             MONMSG     MSGID(CPF0000) EXEC(DO)
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA('Source library not exists or +
+                          not accessable') MSGTYPE(*ESCAPE)
+             ENDDO
+
+/* Create library and add to librarylist */
+             CRTLIB     LIB(&LIB)
+             MONMSG     MSGID(CPF0000)
+
+             CHKOBJ     OBJ(QSYS/&LIB) OBJTYPE(*LIB)
+             MONMSG     MSGID(CPF0000) EXEC(DO)
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA('Source library not exists or +
+                          not accessable') MSGTYPE(*ESCAPE)
+             ENDDO
+
+             ADDLIBLE   LIB(&LIB) POSITION(*FIRST)
+             MONMSG     MSGID(CPF0000)
+
+/* Create messagefile and add messagedescriptions */
+             CRTMSGF    MSGF(&LIB/IMAPMSG) TEXT('IMAP-Mail-Viewer')
+             MONMSG     MSGID(CPF0000) EXEC(DO)
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('Error +
+                          while creating the messagefile. Cancel +
+                          current run.') MSGTYPE(*ESCAPE)
+             ENDDO
+
+             ADDMSGD    MSGID(C000000) MSGF(&LIB/IMAPMSG) +
+                          MSG('IMAP-Mail-Viewer')
+             ADDMSGD    MSGID(C000001) MSGF(&LIB/IMAPMSG) MSG('Host')
+             ADDMSGD    MSGID(C000002) MSGF(&LIB/IMAPMSG) MSG('User')
+             ADDMSGD    MSGID(C000003) MSGF(&LIB/IMAPMSG) +
+                          MSG('Password')
+             ADDMSGD    MSGID(C000004) MSGF(&LIB/IMAPMSG) +
+                          MSG('Secure connection')
+             ADDMSGD    MSGID(C000005) MSGF(&LIB/IMAPMSG) +
+                          MSG('Autorefresh')
+             ADDMSGD    MSGID(C000006) MSGF(&LIB/IMAPMSG) +
+                          MSG('Seconds')
+             ADDMSGD    MSGID(C000007) MSGF(&LIB/IMAPMSG) MSG(' +
+                          From                                       +
+                          Date/Time                   Subject')
+             ADDMSGD    MSGID(C000008) MSGF(&LIB/IMAPMSG) +
+                          MSG('F3=Quit   F5=Refresh   +
+                          F6=Reconnect   F9=Command')
+             ADDMSGD    MSGID(C000009) MSGF(&LIB/IMAPMSG) +
+                          MSG('Connect to Mailserver')
+             ADDMSGD    MSGID(C000010) MSGF(&LIB/IMAPMSG) +
+                          MSG('Host....:')
+             ADDMSGD    MSGID(C000011) MSGF(&LIB/IMAPMSG) +
+                          MSG('User....:')
+             ADDMSGD    MSGID(C000012) MSGF(&LIB/IMAPMSG) +
+                          MSG('Password:')
+             ADDMSGD    MSGID(C000013) MSGF(&LIB/IMAPMSG) +
+                          MSG('TLS.....:')
+             ADDMSGD    MSGID(C000014) MSGF(&LIB/IMAPMSG) +
+                          MSG('F3=Return')
+             ADDMSGD    MSGID(E000000) MSGF(&LIB/IMAPMSG) MSG('Wrong +
+                          login-data')
+             ADDMSGD    MSGID(E000001) MSGF(&LIB/IMAPMSG) +
+                          MSG('Mailbox not found')
+             ADDMSGD    MSGID(M000000) MSGF(&LIB/IMAPMSG) MSG('Read +
+                          inbox, please wait...')
+             ADDMSGD    MSGID(M000001) MSGF(&LIB/IMAPMSG) +
+                          MSG('Connect to host, please wait...')
+             ADDMSGD    MSGID(M000002) MSGF(&LIB/IMAPMSG) MSG('Try +
+                          to make a handshake with the server...')
+             ADDMSGD    MSGID(M000003) MSGF(&LIB/IMAPMSG) MSG('Not +
+                          connected')
+
+/* Create objects */
+             CRTCMD     CMD(&LIB/IMAPVW) PGM(&LIB/IMAPVWRG) +
+                          SRCFILE(&SRC/QCMDSRC) TEXT(*CMDPMT)
+             CRTDSPF    FILE(&LIB/IMAPVWDF) SRCFILE(&SRC/QDDSSRC) +
+                          SRCMBR(IMAPVWDF)
+             CRTBNDRPG  PGM(&LIB/IMAPVWRG) SRCFILE(&SRC/QRPGLESRC) +
+                          SRCMBR(IMAPVWRG) DBGVIEW(*SOURCE)
+
+/* Quit program */
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('Objects +
+                          created successfully. Have fun with them +
+                          :-)') MSGTYPE(*INFO)
+
+             ENDPGM

@@ -1,16 +1,14 @@
 
                                              DSPSIZ(27 132 *DS4) PRINT INDARA
 
-
-     **************************************************************************
+      **************************************************************************
                 R IMAPVWAS                   SFL
 
                   ASLINE       130A  O 04 02
 
                   ASRECN         6  0H
 
-
-     **************************************************************************
+      **************************************************************************
                 R IMAPVWAC                   OVERLAY INVITE
                                              CA03(03) CA04(04)
                                              CA05(05) CA06(06)
@@ -26,8 +24,7 @@
                                              RTNCSRLOC(&ACCRCD &ACCFLD &ACCPOS)
                                              SFLCSRRRN(&CURCUR)
 
-     * - Header
-                  ACHEAD        40A     1  2 MSGID(RG08746 *LIBL/YOURMSGF)
+                  ACHEAD        40A     1  2 MSGID(C000000 *LIBL/IMAPMSG)
                                              COLOR(WHT)
                                         1100 USER
                                         1112 DATE EDTCDE(Y)
@@ -38,26 +35,24 @@
                   ACCRCD        10A  H
                   ACCFLD        10A  H
                   ACCPOS         4S 0H
-     * - I/O
+
                   ACREFR         2S 0B  2130COLOR(TRQ) ALIAS(AC_REFRESH)
                                             RANGE(1 60)
-     * - O
                   ACMAIL        60A  O  2  2ALIAS(AC_MAIL)
                                             COLOR(YLW)
                   ACDEVICE      10A  O  2100
-                  ACHEAD0       16A  O  2113MSGID(RG08727 *LIBL/YOURMSGF)
+                  ACHEAD0       16A  O  2112MSGID(C000005 *LIBL/IMAPMSG)
                   ACLIN00      130A  O  3  2DSPATR(UL) COLOR(BLU)
-                                            MSGID(RG08747 *LIBL/YOURMSGF)
+                                            MSGID(C000007 *LIBL/IMAPMSG)
 
 
-     **************************************************************************
+      **************************************************************************
                 R IMAPVWAF                  OVERLAY
                   AFLIN01      130A  O 25 02DSPATR(UL) COLOR(BLU)
-                  AFLIN02      130A  O 26 02MSGID(RG08748 *LIBL/YOURMSGF)
+                  AFLIN02      130A  O 26 02MSGID(C000008 *LIBL/IMAPMSG)
                                             COLOR(BLU)
 
-
-     **************************************************************************
+      **************************************************************************
                 R IMAPVWW0                  OVERLAY
                                             WINDOW(10 20 09 46 *NOMSGLIN)
                                             WDWBORDER((*CHAR '        ') +
@@ -74,12 +69,12 @@
                   W0CFLD        10A  H
                   W0CPOS         4S 0H
 
-                  W0CHEAD       30A  O  1  2MSGID(RG08749 *LIBL/YOURMSGF)
-                  W0CHOST        9A  O  3  2MSGID(RG08750 *LIBL/YOURMSGF)
-                  W0CUSER        9A  O  4  2MSGID(RG08751 *LIBL/YOURMSGF)
-                  W0CPASS        9A  O  5  2MSGID(RG08752 *LIBL/YOURMSGF)
-                  W0CUTLS        9A  O  6  2MSGID(RG08753 *LIBL/YOURMSGF)
-                  W0CFOOT       30A  O  8  2MSGID(RG08754 *LIBL/YOURMSGF)
+                  W0CHEAD       30A  O  1  2MSGID(C000009 *LIBL/IMAPMSG)
+                  W0CHOST        9A  O  3  2MSGID(C000010 *LIBL/IMAPMSG)
+                  W0CUSER        9A  O  4  2MSGID(C000011 *LIBL/IMAPMSG)
+                  W0CPASS        9A  O  5  2MSGID(C000012 *LIBL/IMAPMSG)
+                  W0CUTLS        9A  O  6  2MSGID(C000013 *LIBL/IMAPMSG)
+                  W0CFOOT       30A  O  8  2MSGID(C000014 *LIBL/IMAPMSG)
                                             COLOR(BLU)
                   W0HOST        16A  B  3 12COLOR(TRQ) ALIAS(W0_HOST)
                                             CHECK(LC)
@@ -89,3 +84,4 @@
                                             CHECK(LC) DSPATR(ND)
                   W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
+
