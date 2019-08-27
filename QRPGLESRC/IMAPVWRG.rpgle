@@ -33,7 +33,7 @@ CTL-OPT MAIN(Main);
 
 
 DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
-               SFILE(IMAPVWAS :RECNUM) USROPN;
+               SFILE(IMAPVWAS :RecordNumber) USROPN;
 
 
 /INCLUDE QRPGLECPY,PSDS
@@ -59,12 +59,11 @@ DCL-PR Main EXTPGM('IMAPVWRG');
 END-PR;
 
 
+/INCLUDE QRPGLECPY,QUSCMDLN
 /INCLUDE QRPGLECPY,SOCKET_H
 /INCLUDE QRPGLECPY,GSKSSL_H
 /INCLUDE QRPGLECPY,ERRNO_H
-/INCLUDE QRPGLECPY,QMHSNDPM
 /INCLUDE QRPGLECPY,SYSTEM
-/INCLUDE QRPGLECPY,F09
 
 
 /INCLUDE QRPGLECPY,BOOLIC
@@ -80,7 +79,10 @@ DCL-C CRLF X'0D25';
 DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
 
-DCL-S RecNum UNS(10) INZ;
+DCL-S RecordNumber UNS(10) INZ;
+DCL-S PgmQueue CHAR(10) INZ('MAIN');
+DCL-S CallStack INT(10) INZ;
+
 DCL-DS This QUALIFIED;
   PictureControl CHAR(1) INZ(FM_A);
   RefreshSeconds PACKED(2 :0) INZ;
@@ -190,12 +192,14 @@ DCL-PROC loopFM_A;
 
  DoW ( This.PictureControl = FM_A );
 
-
    AFLin01 = %TrimR(retrieveMessageText('C000005')) + ' ' + %Char(This.RefreshSeconds) + 's';
    AC_Refresh = This.RefreshSeconds;
 
    Write IMAPVWAF;
+   Write IMAPVWZC;
    Write IMAPVWAC;
+
+   clearMessages(PgmQueue :CallStack);
 
    RecieveDataQueue('IMAPVW' :'QTEMP' :IncomingData.Length :IncomingData.Data
                     :This.RefreshSeconds);
@@ -227,7 +231,7 @@ DCL-PROC loopFM_A;
        EndIf;
 
      When ( WSDS.CommandLine );
-       promtCommandLine();
+       promptCommandLine();
 
      Other;
        fetchRecordsFM_A();
@@ -251,11 +255,11 @@ DCL-PROC initFM_A;
  DCL-S Success IND INZ(TRUE);
  //-------------------------------------------------------------------------
 
- Reset RecNum;
+ Reset RecordNumber;
  Clear IMAPVWAC;
  Clear IMAPVWAS;
 
- ACDevice = PSDS.JobName;
+ AC_Device = PSDS.JobName;
 
  If ( pHost <> '' );
    This.LogInDataDS.Host = pHost;
@@ -311,7 +315,7 @@ DCL-PROC fetchRecordsFM_A;
  END-DS;
  //-------------------------------------------------------------------------
 
- Reset RecNum;
+ Reset RecordNumber;
 
  WSDS.SubfileClear = TRUE;
  WSDS.SubfileDisplayControl = TRUE;
@@ -345,24 +349,24 @@ DCL-PROC fetchRecordsFM_A;
      SubfileDS.Color3 = ' | ';
      SubfileDS.Subject = MailDS(i).Subject;
 
-     RecNum += 1;
-     ASLine = SubfileDS;
-     ASRecN = RecNum;
+     RecordNumber += 1;
+     AS_Subfile_Line = SubfileDS;
+     AS_RecordNumber = RecordNumber;
      Write IMAPVWAS;
 
    EndFor;
 
-   If ( CurCur > 0 ) And ( CurCur <= RecNum );
-     RecNum = CurCur;
+   If ( AC_CurrentCursor > 0 ) And ( AC_CurrentCursor <= RecordNumber );
+     RecordNumber = AC_CurrentCursor;
    Else;
-     RecNum = 1;
+     RecordNumber = 1;
    EndIf;
 
  Else;
 
-   RecNum = 1;
-   ASRecN = RecNum;
-   ASLine = This.GlobalMessage;
+   RecordNumber = 1;
+   AS_Subfile_Line = This.GlobalMessage;
+   AS_RecordNumber = RecordNumber;
    Write IMAPVWAS;
 
  EndIf;
@@ -433,7 +437,7 @@ DCL-PROC connectToHost;
  DCL-S Success IND INZ(TRUE);
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
- DCL-S Data CHAR(1024) INZ;
+ DCL-S Data CHAR(32766) INZ;
  //-------------------------------------------------------------------------
 
  sendStatus(retrieveMessageText('M000001'));
@@ -489,12 +493,12 @@ DCL-PROC connectToHost;
 
  If Success;
    RC = recieveData(%Addr(Data) :%Size(Data));
-   Data = translateData(Data :UTF8 :LOCAL);
+   translateData(%Addr(Data) :UTF8 :LOCAL);
    Success = ( %Scan('OK' :Data) > 0 );
    If Success;
      Data = 'a LOGIN ' + %TrimR(This.LogInDataDS.User) + ' ' +
             %TrimR(This.LogInDataDS.Password) + CRLF;
-     Data = translateData(Data :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :UTF8);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC <= 0 );
@@ -502,7 +506,7 @@ DCL-PROC connectToHost;
        disconnectFromHost();
        Success = This.Connected;
      Else;
-       Data = translateData(Data :UTF8 :LOCAL);
+       translateData(%Addr(Data) :UTF8 :LOCAL);
        This.Connected = ( %Scan('OK' :Data) > 0 );
        If Not This.Connected;
          This.GlobalMessage = retrieveMessageText('E000000');
@@ -529,7 +533,7 @@ DCL-PROC disconnectFromHost;
  //-------------------------------------------------------------------------
 
  Data = 'a LOGOUT' + CRLF;
- translateData(Data :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :UTF8);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  This.Connected = FALSE;
  cleanUp_Socket();
@@ -660,18 +664,18 @@ DCL-PROC readMailsFromInbox;
  DCL-S b UNS(10) INZ;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
- DCL-S Data CHAR(16384) INZ;
+ DCL-S Data CHAR(32766) INZ;
  //-------------------------------------------------------------------------
 
  Data = 'a EXAMINE INBOX' + CRLF;
- Data = translateData(Data :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :UTF8);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  RC = recieveData(%Addr(Data) :%Size(Data));
  If ( RC <= 0 );
    This.GlobalMessage = %Str(strError(ErrNo));
    Success = FALSE;
  Else;
-   Data = translateData(Data :UTF8 :LOCAL);
+   translateData(%Addr(Data) :UTF8 :LOCAL);
    If ( %Scan('NO EXAMINE' :Data) > 0 );
      This.GlobalMessage = retrieveMessageText('E000001');
      Success = FALSE;
@@ -687,11 +691,11 @@ DCL-PROC readMailsFromInbox;
  If Success And ( This.RecordsFound > 0 );
    For a = This.RecordsFound DownTo 1;
      Data = 'a FETCH ' + %Char(a) + ' (FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])' + CRLF;
-     Data = translateData(Data :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :UTF8);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC > 0 );
-       Data = translateData(Data :UTF8 :LOCAL);
+       translateData(%Addr(Data) :UTF8 :LOCAL);
        If ( %Scan('From' :Data) > 0 );
          If ( b = MAX_ROWS_TO_FETCH );
            Leave;
@@ -713,7 +717,7 @@ END-PROC;
 //**************************************************************************
 DCL-PROC extractFieldsFromStream;
  DCL-PI *N LIKEDS(MailDS_T);
-   pData CHAR(16384) CONST;
+   pData CHAR(32766) CONST;
  END-PI;
 
  DCL-S s UNS(10) INZ;
@@ -762,7 +766,7 @@ DCL-PROC sendData;
 
  DCL-S RC INT(10) INZ;
  DCL-S GSKLength INT(10) INZ;
- DCL-S Buffer CHAR(32766) BASED(pData);
+ DCL-S Buffer VARCHAR(32766) BASED(pData);
  //--------------------------------------------------------------------------
 
  If This.LogInDataDS.UseTLS;
@@ -790,7 +794,7 @@ DCL-PROC recieveData;
 
  DCL-S RC INT(10) INZ;
  DCL-S GSKLength INT(10) INZ;
- DCL-S Buffer CHAR(32766) BASED(pData);
+ DCL-S Buffer VARCHAR(32766) BASED(pData);
  //--------------------------------------------------------------------------
 
  If This.LogInDataDS.UseTLS;
@@ -822,71 +826,28 @@ END-PROC;
 
 //**************************************************************************
 DCL-PROC translateData;
- DCL-PI *N CHAR(1024);
-   pStream CHAR(1024) CONST;
+ DCL-PI *N;
+   pData POINTER VALUE;
    pFromCCSID INT(10) CONST;
    pToCCSID INT(10) CONST;
  END-PI;
 
- DCL-PR iConv_Open LIKE(ToASCII) EXTPROC('QtqIconvOpen');
-   ToCode LIKE(FromDS);
-   FromCode LIKE(ToDS);
- END-PR;
+ /INCLUDE QRPGLECPY,ICONV
 
- DCL-PR iConv INT(10) EXTPROC('iconv');
-   Descriptor LIKE(ToASCII) VALUE;
-   InBuff POINTER;
-   InLeft UNS(10);
-   OutBuffer POINTER;
-   OutLeft UNS(10);
- END-PR;
-
- DCL-PR iConv_Close INT(10) EXTPROC('iconv_close');
-   Descriptor LIKE(ToASCII) VALUE;
- END-PR;
-
- DCL-S ConvHandler POINTER;
+ DCL-S iConvHandler POINTER;
  DCL-S Length UNS(10) INZ;
- DCL-S Result CHAR(1024) INZ;
-
- DCL-DS ToASCII QUALIFIED INZ;
-   ICORV_A INT(10);
-   ICOC_A INT(10) DIM(12);
- END-DS;
-
- DCL-DS FromDS QUALIFIED;
-   FromCCSID INT(10) INZ;
-   CA INT(10) INZ;
-   SA INT(10) INZ;
-   SS INT(10) INZ;
-   IL INT(10) INZ;
-   EO INT(10) INZ;
-   R CHAR(8) INZ(*ALLX'00');
- END-DS;
-
- DCL-DS ToDS QUALIFIED;
-   ToCCSID INT(10) INZ;
-   CA INT(10) INZ;
-   SA INT(10) INZ;
-   SS INT(10) INZ;
-   IL INT(10) INZ;
-   EO INT(10) INZ;
-   R CHAR(8) INZ(*ALLX'00');
- END-DS;
+ DCL-S Data CHAR(32766) BASED(pData);
  //-------------------------------------------------------------------------
 
- Result = %TrimR(pStream);
- ConvHandler = %Addr(Result);
- Length = %Len(%TrimR(Result));
+ iConvHandler = %Addr(Data);
+ Length = %Len(%TrimR(Data));
  FromDS.FromCCSID = pFromCCSID;
  ToDS.ToCCSID = pToCCSID;
  ToASCII = iConv_Open(ToDS :FromDS);
  If ( ToASCII.ICORV_A >= 0 );
-   iConv(ToASCII  :ConvHandler :Length  :ConvHandler :Length);
+   iConv(ToASCII :iConvHandler :Length  :iConvHandler :Length);
  EndIf;
  iConv_Close(ToASCII);
-
- Return Result;
 
 END-PROC;
 
@@ -897,6 +858,8 @@ DCL-PROC sendStatus;
    pMessage CHAR(256) CONST;
  END-PI;
 
+ /INCLUDE QRPGLECPY,QMHSNDPM
+
  DCL-DS MessageDS LIKEDS(MessageHandlingDS_T) INZ;
  //-------------------------------------------------------------------------
 
@@ -905,6 +868,23 @@ DCL-PROC sendStatus;
    sendProgramMessage('CPF9897'  :'QCPFMSG   *LIBL' :pMessage :MessageDS.Length
                       :'*STATUS' :'*EXT' :0 :MessageDS.Key :MessageDS.Error);
  EndIf;
+
+END-PROC;
+
+
+//**************************************************************************
+DCL-PROC clearMessages;
+ DCL-PI *N;
+   pMessageProgramQueue CHAR(10) CONST;
+   pMessageCallStack INT(10) CONST;
+ END-PI;
+
+ /INCLUDE QRPGLECPY,QMHRMVPM
+
+ DCL-S Error CHAR(128) INZ;
+ //-------------------------------------------------------------------------
+
+ removeProgramMessage(pMessageProgramQueue :pMessageCallStack :'' :'*ALL' :Error);
 
 END-PROC;
 

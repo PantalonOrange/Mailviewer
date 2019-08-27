@@ -1,12 +1,13 @@
 
                                              DSPSIZ(27 132 *DS4) PRINT INDARA
+                                             MSGLOC(27) ERRSFL
 
       **************************************************************************
                 R IMAPVWAS                   SFL
 
-                  ASLINE       130A  O 04 02
+                  ASLINE       130A  O 04 02 ALIAS(AS_SUBFILE_LINE)
 
-                  ASRECN         6  0H
+                  ASRECN         6  0H       ALIAS(AS_RECORDNUMBER)
 
       **************************************************************************
                 R IMAPVWAC                   OVERLAY INVITE
@@ -29,18 +30,18 @@
                                         1100 USER
                                         1112 DATE EDTCDE(Y)
                                         1124 TIME
-                  CURCUR         5S 0H
-                  ACCROW         3S 0H
-                  ACCCOL         3S 0H
-                  ACCRCD        10A  H
-                  ACCFLD        10A  H
-                  ACCPOS         4S 0H
+                  CURCUR         5S 0H       ALIAS(AC_CURRENTCURSOR)
+                  ACCROW         3S 0H       ALIAS(AC_CURRENT_ROW)
+                  ACCCOL         3S 0H       ALIAS(AC_CURRENT_COLUMN)
+                  ACCRCD        10A  H       ALIAS(AC_CURRENT_RECORD)
+                  ACCFLD        10A  H       ALIAS(AC_CURRENT_FIELD)
+                  ACCPOS         4S 0H       ALIAS(AC_CURRENT_POSITION)
 
                   ACREFR         2S 0B  2130COLOR(TRQ) ALIAS(AC_REFRESH)
                                             RANGE(1 60)
                   ACMAIL        60A  O  2  2ALIAS(AC_MAIL)
                                             COLOR(YLW)
-                  ACDEVICE      10A  O  2100
+                  ACDEVICE      10A  O  2100ALIAS(AC_DEVICE)
                   ACHEAD0       16A  O  2112MSGID(C000005 *LIBL/IMAPMSG)
                   ACLIN00      130A  O  3  2DSPATR(UL) COLOR(BLU)
                                             MSGID(C000007 *LIBL/IMAPMSG)
@@ -51,6 +52,26 @@
                   AFLIN01      130A  O 25 02DSPATR(UL) COLOR(BLU)
                   AFLIN02      130A  O 26 02MSGID(C000008 *LIBL/IMAPMSG)
                                             COLOR(BLU)
+
+      **************************************************************************
+                R IMAPVWZS                   SFL
+                                             SFLMSGRCD(24)
+                  MESSAGEKEY                 SFLMSGKEY
+                  PGMQUEUE                   SFLPGMQ(10)
+
+      **************************************************************************
+                R IMAPVWZC                   SFLCTL(IMAPVWZS)
+                                             CF01
+                                             KEEP
+                                             OVERLAY
+                                             PUTRETAIN
+                                             SFLDSP
+                                             SFLDSPCTL
+                                             SFLINZ
+       N88                                   SFLEND
+                                             SFLSIZ(2)
+                                             SFLPAG(1)
+                  PGMQUEUE                   SFLPGMQ(10)
 
       **************************************************************************
                 R IMAPVWW0                  OVERLAY
@@ -84,4 +105,3 @@
                                             CHECK(LC) DSPATR(ND)
                   W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
-
