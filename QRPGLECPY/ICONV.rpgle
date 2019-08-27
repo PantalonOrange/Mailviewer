@@ -25,7 +25,6 @@
 
 /DEFINE API_ICONV
 
-
 DCL-PR iConv_Open LIKE(ToASCII) EXTPROC('QtqIconvOpen');
   ToCode LIKE(FromDS);
   FromCode LIKE(ToDS);
@@ -66,4 +65,9 @@ DCL-DS ToDS QUALIFIED;
   IL INT(10) INZ;
   EO INT(10) INZ;
   R CHAR(8) INZ(*ALLX'00');
+END-DS;
+
+DCL-DS iConvDS QUALIFIED INZ;
+  iConvHandler POINTER;
+  Length UNS(10);
 END-DS;

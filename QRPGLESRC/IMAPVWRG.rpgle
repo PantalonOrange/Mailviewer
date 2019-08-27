@@ -1,31 +1,35 @@
 **FREE
-//- Copyright (c) 2019 Christian Brunner
-//-
-//- Permission is hereby granted, free of charge, to any person obtaining a copy
-//- of this software and associated documentation files (the "Software"), to deal
-//- in the Software without restriction, including without limitation the rights
-//- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//- copies of the Software, and to permit persons to whom the Software is
-//- furnished to do so, subject to the following conditions:
+// Copyright (c) 2019 Christian Brunner
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 
-//- The above copyright notice and this permission notice shall be included in all
-//- copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 
-//- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//- SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-//  Created by BRC on 09.08.2019
-
-//  CAUTION: PRE-ALPHA!
+// Created by BRC on 09.08.2019 - 27.08.2019
 
 // Simple imap client
 //   I use the socket_h header from scott klement - (c) Scott Klement
 //   https://www.scottklement.com/rpg/socktut/socktut.savf
+
+// CAUTION: ALPHA-VERSION
+
+// TO-DOs:
+//  + Improve field-extraction from incoming imap-stream
+//  + Decode Base64-encoded subjects
 
 
 /INCLUDE QRPGLECPY,H_SPECS
@@ -89,7 +93,7 @@ DCL-DS This QUALIFIED;
   GlobalMessage CHAR(130) INZ;
   RecordsFound UNS(10) INZ;
   Connected IND INZ(FALSE);
-  LoginDataDS LIKEDS(LogInDataDS_T) INZ;
+  LogInDataDS LIKEDS(LogInDataDS_T) INZ;
   SocketDS LIKEDS(SocketDS_T) INZ;
   GSKDS LIKEDS(GSKDS_T) INZ;
 END-DS;
@@ -115,11 +119,6 @@ DCL-DS MailDS_T QUALIFIED TEMPLATE;
   SendDate CHAR(25);
   Subject CHAR(1024);
   UnseenFlag IND;
-END-DS;
-DCL-DS MessageHandlingDS_T QUALIFIED TEMPLATE;
-  Length INT(10);
-  Key CHAR(4);
-  Error CHAR(128);
 END-DS;
 
 
@@ -660,8 +659,8 @@ DCL-PROC readMailsFromInbox;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
- DCL-S a UNS(10) INZ;
- DCL-S b UNS(10) INZ;
+ DCL-S a INT(10) INZ;
+ DCL-S b INT(10) INZ;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(32766) INZ;
@@ -701,7 +700,7 @@ DCL-PROC readMailsFromInbox;
            Leave;
          EndIf;
          b += 1;
-         pMailDS(b) = extractFieldsFromStream(Data);
+         pMailDS(b) = extractFieldsFromStream(%Addr(Data));
        EndIf;
      EndIf;
    EndFor;
@@ -717,40 +716,41 @@ END-PROC;
 //**************************************************************************
 DCL-PROC extractFieldsFromStream;
  DCL-PI *N LIKEDS(MailDS_T);
-   pData CHAR(32766) CONST;
+   pData POINTER VALUE;
  END-PI;
 
- DCL-S s UNS(10) INZ;
- DCL-S e UNS(10) INZ;
+ DCL-S s INT(10) INZ;
+ DCL-S e INT(10) INZ;
+ DCL-S Data CHAR(32766) BASED(pData);
 
  DCL-DS MailDS LIKEDS(MailDS_T) INZ;
  //-------------------------------------------------------------------------
 
- s = %Scan('From:' :pData) + 6;
- e = %Scan(CRLF :pData :s) - 1;
+ s = %Scan('From:' :Data) + 6;
+ e = %Scan(CRLF :Data :s) - 1;
  If ( s > 0 ) And ( e > s );
-   MailDS.Sender = %SubSt(pData :s :(e - s) + 1);
+   MailDS.Sender = %SubSt(Data :s :(e - s) + 1);
    If ( %Scan('@' :MailDS.Sender) = 0 );
      Clear MailDS.Sender;
    EndIf;
  EndIf;
 
- s = %Scan('Date:' :pData) + 6;
- e = %Scan(CRLF :pData :s) - 1;
+ s = %Scan('Date:' :Data) + 6;
+ e = %Scan(CRLF :Data :s) - 1;
  If ( s > 0 ) And ( e > s );
-   MailDS.SendDate = %SubSt(pData :s :(e - s) + 1);
+   MailDS.SendDate = %SubSt(Data :s :(e - s) + 1);
  EndIf;
 
- s = %Scan('Subject:' :pData) + 9;
- e = %Scan(CRLF :pData :s) - 1;
+ s = %Scan('Subject:' :Data) + 9;
+ e = %Scan(CRLF :Data :s) - 1;
  If ( s > 0 ) And ( e > s );
-   MailDS.Subject = %SubSt(pData :s :(e - s) + 1);
+   MailDS.Subject = %SubSt(Data :s :(e - s) + 1);
    If ( %SubSt(MailDS.Subject :1 :2) = '=?' );
-     MailDS.Subject = 'Undefined subject';
+     Clear MailDS.Subject;
    EndIf;
  EndIf;
 
- MailDS.UnseenFlag = ( %Scan('\Seen' :pData) = 0 );
+ MailDS.UnseenFlag = ( %Scan('\Seen' :Data) = 0 );
 
  Return MailDS;
 
@@ -834,18 +834,16 @@ DCL-PROC translateData;
 
  /INCLUDE QRPGLECPY,ICONV
 
- DCL-S iConvHandler POINTER;
- DCL-S Length UNS(10) INZ;
  DCL-S Data CHAR(32766) BASED(pData);
  //-------------------------------------------------------------------------
 
- iConvHandler = %Addr(Data);
- Length = %Len(%TrimR(Data));
+ iConvDS.iConvHandler = %Addr(Data);
+ iConvDS.Length = %Len(%TrimR(Data));
  FromDS.FromCCSID = pFromCCSID;
  ToDS.ToCCSID = pToCCSID;
  ToASCII = iConv_Open(ToDS :FromDS);
  If ( ToASCII.ICORV_A >= 0 );
-   iConv(ToASCII :iConvHandler :Length  :iConvHandler :Length);
+   iConv(ToASCII :iConvDS.iConvHandler :iConvDS.Length :iConvDS.iConvHandler :iConvDS.Length);
  EndIf;
  iConv_Close(ToASCII);
 
@@ -860,7 +858,11 @@ DCL-PROC sendStatus;
 
  /INCLUDE QRPGLECPY,QMHSNDPM
 
- DCL-DS MessageDS LIKEDS(MessageHandlingDS_T) INZ;
+ DCL-DS MessageDS QUALIFIED INZ;
+   Length INT(10);
+   Key CHAR(4);
+   Error CHAR(128);
+ END-DS;
  //-------------------------------------------------------------------------
 
  MessageDS.Length = %Len(%TrimR(pMessage));
