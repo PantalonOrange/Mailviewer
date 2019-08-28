@@ -29,6 +29,7 @@
 
 // TO-DOs:
 //  + Improve field-extraction from incoming imap-stream
+//  + Improve errorhandling and messages
 //  + Decode Base64-encoded subjects
 
 
@@ -225,9 +226,8 @@ DCL-PROC loopFM_A;
        fetchRecordsFM_A();
 
      When ( WSDS.ReConnect );
-       If reConnectToHost();
-         fetchRecordsFM_A();
-       EndIf;
+       reConnectToHost();
+       fetchRecordsFM_A();
 
      When ( WSDS.CommandLine );
        promptCommandLine();
@@ -437,6 +437,11 @@ DCL-PROC connectToHost;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(32766) INZ;
+
+ DCL-DS TimeOutDS QUALIFIED INZ;
+   Seconds INT(10);
+   MicroSeconds INT(10);
+ END-DS;
  //-------------------------------------------------------------------------
 
  sendStatus(retrieveMessageText('M000001'));
@@ -447,8 +452,9 @@ DCL-PROC connectToHost;
    If ( P_HostEnt = *NULL );
      This.GlobalMessage = %Str(strError(ErrNo));
      Success = FALSE;
+   Else;
+     This.SocketDS.Address = H_Addr;
    EndIf;
-   This.SocketDS.Address = H_Addr;
  EndIf;
 
  If Success;
@@ -461,6 +467,12 @@ DCL-PROC connectToHost;
      This.GlobalMessage = %Str(strError(ErrNo));
      cleanUp_Socket();
      Success = FALSE;
+   Else;
+     TimeOutDS.Seconds = 10;
+     setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_RCVTIMEO
+                :%Addr(TimeOutDS) :%Size(TimeOutDS));
+     setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_SNDTIMEO
+                :%Addr(TimeOutDS) :%Size(TimeOutDS));
    EndIf;
  EndIf;
 
@@ -478,7 +490,7 @@ DCL-PROC connectToHost;
    EndIf;
    Sin_Zero = *ALLx'00';
 
-   If ( Connect(This.SocketDS.SocketHandler :This.SocketDS.ConnectTo
+   If ( connect(This.SocketDS.SocketHandler :This.SocketDS.ConnectTo
                 :This.SocketDS.AddressLength) < 0 );
      This.GlobalMessage = %Str(strError(ErrNo));
      cleanUp_Socket();
@@ -542,7 +554,6 @@ END-PROC;
 
 //**************************************************************************
 DCL-PROC reConnectToHost;
- DCL-PI *N IND END-PI;
 
  DCL-S Success IND INZ(TRUE);
  //-------------------------------------------------------------------------
@@ -557,9 +568,15 @@ DCL-PROC reConnectToHost;
  If Success;
    This.Connected = connectToHost();
    Success = This.Connected;
+   If Success;
+     AC_Mail = This.LogInDataDS.User;
+     If ( This.LogInDataDS.UseTLS );
+       AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
+     EndIf;
+   Else;
+     AC_Mail = retrieveMessageText('M000003');
+   EndIf;
  EndIf;
-
- Return Success;
 
 END-PROC;
 
