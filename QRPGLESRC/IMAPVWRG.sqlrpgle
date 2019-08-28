@@ -81,6 +81,7 @@ DCL-C TLS_PORT 993;
 DCL-C MAX_ROWS_TO_FETCH 60;
 DCL-C LOCAL 0;
 DCL-C UTF8 1208;
+DCL-C ASCII 1252;
 DCL-C CRLF X'0D25';
 DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
@@ -270,19 +271,19 @@ DCL-PROC initFM_A;
  If ( pHost <> '' );
    This.LogInDataDS.Host = pHost;
  EndIf;
- 
+
  If ( pUser = '*CURRENT' );
    This.LogInDataDS.User = retrieveCurrentUserAddress();
  ElseIf ( pUser <> '' );
    This.LogInDataDS.User = pUser;
  EndIf;
- 
+
  If ( pPassword <> '' );
    This.LogInDataDS.Password = pPassword;
  EndIf;
- 
+
  This.LogInDataDS.UseTLS = pUseTLS;
- 
+
  If ( pPort = 0 ) And This.LogInDataDS.UseTLS;
    This.LogInDataDS.Port = TLS_PORT;
  ElseIf ( pPort = 0 ) And Not This.LogInDataDS.UseTLS;
@@ -296,7 +297,7 @@ DCL-PROC initFM_A;
  Else;
    This.RefreshSeconds = 10;
  EndIf;
- 
+
  If ( This.LogInDataDS.Host = '' ) Or ( This.LogInDataDS.User = '' )
   Or ( This.LogInDataDS.Password = '' ) Or ( This.LogInDataDS.Port = 0 );
    Success = askForLogInData();
@@ -533,12 +534,12 @@ DCL-PROC connectToHost;
 
  If Success;
    RC = recieveData(%Addr(Data) :%Size(Data));
-   translateData(%Addr(Data) :UTF8 :LOCAL);
+   translateData(%Addr(Data) :ASCII :LOCAL);
    Success = ( %Scan('OK' :Data) > 0 );
    If Success;
      Data = 'a LOGIN ' + %TrimR(This.LogInDataDS.User) + ' ' +
             %TrimR(This.LogInDataDS.Password) + CRLF;
-     translateData(%Addr(Data) :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :ASCII);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC <= 0 );
@@ -546,7 +547,7 @@ DCL-PROC connectToHost;
        disconnectFromHost();
        Success = This.Connected;
      Else;
-       translateData(%Addr(Data) :UTF8 :LOCAL);
+       translateData(%Addr(Data) :ASCII :LOCAL);
        This.Connected = ( %Scan('OK' :Data) > 0 );
        If Not This.Connected;
          This.GlobalMessage = retrieveMessageText('E000000');
@@ -573,7 +574,7 @@ DCL-PROC disconnectFromHost;
  //-------------------------------------------------------------------------
 
  Data = 'a LOGOUT' + CRLF;
- translateData(%Addr(Data) :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :ASCII);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  This.Connected = FALSE;
  cleanUp_Socket();
@@ -713,14 +714,14 @@ DCL-PROC readMailsFromInbox;
  //-------------------------------------------------------------------------
 
  Data = 'a EXAMINE INBOX' + CRLF;
- translateData(%Addr(Data) :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :ASCII);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  RC = recieveData(%Addr(Data) :%Size(Data));
  If ( RC <= 0 );
    This.GlobalMessage = %Str(strError(ErrNo));
    Success = FALSE;
  Else;
-   translateData(%Addr(Data) :UTF8 :LOCAL);
+   translateData(%Addr(Data) :ASCII :LOCAL);
    If ( %Scan('NO EXAMINE' :Data) > 0 );
      This.GlobalMessage = retrieveMessageText('E000001');
      Success = FALSE;
@@ -736,11 +737,11 @@ DCL-PROC readMailsFromInbox;
  If Success And ( This.RecordsFound > 0 );
    For a = This.RecordsFound DownTo 1;
      Data = 'a FETCH ' + %Char(a) + ' (FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])' + CRLF;
-     translateData(%Addr(Data) :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :ASCII);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC > 0 );
-       translateData(%Addr(Data) :UTF8 :LOCAL);
+       translateData(%Addr(Data) :ASCII :LOCAL);
        If ( %Scan('From' :Data) > 0 );
          If ( b = MAX_ROWS_TO_FETCH );
            Leave;
@@ -885,7 +886,7 @@ DCL-PROC retrieveCurrentUserAddress;
  If ( SQLCode = 100 );
    Clear MailAddress;
  EndIf;
- 
+
  Return MailAddress;
 
 END-PROC;
