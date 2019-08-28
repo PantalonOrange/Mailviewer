@@ -1,41 +1,46 @@
 
-                                             DSPSIZ(27 132 *DS4) PRINT INDARA
-                                             MSGLOC(27) ERRSFL
+                                            DSPSIZ(27 132 *DS4) PRINT INDARA
+                                            ALTHELP(CA01) HELP
+                                            MSGLOC(27) ERRSFL
 
       **************************************************************************
-                R IMAPVWAS                   SFL
+                R IMAPVWAS                  SFL
 
-                  ASLINE       130A  O 04 02 ALIAS(AS_SUBFILE_LINE)
+                  ASLINE       130A  O 04 02ALIAS(AS_SUBFILE_LINE)
 
-                  ASRECN         6  0H       ALIAS(AS_RECORDNUMBER)
+                  ASRECN         6  0H      ALIAS(AS_RECORDNUMBER)
 
       **************************************************************************
-                R IMAPVWAC                   OVERLAY INVITE
-                                             CA03(03) CA04(04)
-                                             CA05(05) CA06(06)
-                                             CA09(09)
-                                             SFLCTL(IMAPVWAS)
-                                             SFLPAG(20) SFLSIZ(21)
-        20                                   SFLCLR
-        21                                   SFLDSPCTL
-        22                                   SFLDSP
-        23                                   SFLEND(*MORE)
-                                             CSRLOC(ACCROW ACCCOL)
-                                             RTNCSRLOC(*MOUSE  &ACCROW &ACCCOL)
-                                             RTNCSRLOC(&ACCRCD &ACCFLD &ACCPOS)
-                                             SFLCSRRRN(&CURCUR)
+                R IMAPVWAC                  OVERLAY INVITE
+                                            CA03(03) CA04(04)
+                                            CA05(05) CA06(06)
+                                            CA09(09)
+                                            SFLCTL(IMAPVWAS)
+                                            SFLPAG(20) SFLSIZ(21)
+        20                                  SFLCLR
+        21                                  SFLDSPCTL
+        22                                  SFLDSP
+        23                                  SFLEND(*MORE)
+                                            CSRLOC(ACCROW ACCCOL)
+                                            RTNCSRLOC(*MOUSE  &ACCROW &ACCCOL)
+                                            RTNCSRLOC(&ACCRCD &ACCFLD &ACCPOS)
+                                            SFLCSRRRN(&CURCUR)
+                                            HLPCLR
+                                            HLPTITLE('IMAP-Mail-Viewer')
+                H                           HLPPNLGRP('IMAPVWAC' IMAPVW)
+                                            HLPARA(1 2 27 132)
 
-                  ACHEAD        40A     1  2 MSGID(C000000 *LIBL/IMAPMSG)
-                                             COLOR(WHT)
-                                        1100 USER
-                                        1112 DATE EDTCDE(Y)
-                                        1124 TIME
-                  CURCUR         5S 0H       ALIAS(AC_CURRENTCURSOR)
-                  ACCROW         3S 0H       ALIAS(AC_CURRENT_ROW)
-                  ACCCOL         3S 0H       ALIAS(AC_CURRENT_COLUMN)
-                  ACCRCD        10A  H       ALIAS(AC_CURRENT_RECORD)
-                  ACCFLD        10A  H       ALIAS(AC_CURRENT_FIELD)
-                  ACCPOS         4S 0H       ALIAS(AC_CURRENT_POSITION)
+                  ACHEAD        40A     1  2MSGID(C000000 *LIBL/IMAPMSG)
+                                            COLOR(WHT)
+                                        1100USER
+                                        1112DATE EDTCDE(Y)
+                                        1124TIME
+                  CURCUR         5S 0H      ALIAS(AC_CURRENTCURSOR)
+                  ACCROW         3S 0H      ALIAS(AC_CURRENT_ROW)
+                  ACCCOL         3S 0H      ALIAS(AC_CURRENT_COLUMN)
+                  ACCRCD        10A  H      ALIAS(AC_CURRENT_RECORD)
+                  ACCFLD        10A  H      ALIAS(AC_CURRENT_FIELD)
+                  ACCPOS         4S 0H      ALIAS(AC_CURRENT_POSITION)
 
                   ACREFR         2S 0B  2130COLOR(TRQ) ALIAS(AC_REFRESH)
                                             RANGE(1 60)
@@ -54,24 +59,24 @@
                                             COLOR(BLU)
 
       **************************************************************************
-                R IMAPVWZS                   SFL
-                                             SFLMSGRCD(24)
-                  MESSAGEKEY                 SFLMSGKEY
-                  PGMQUEUE                   SFLPGMQ(10)
+                R IMAPVWZS                  SFL
+                                            SFLMSGRCD(24)
+                  MESSAGEKEY                SFLMSGKEY
+                  PGMQUEUE                  SFLPGMQ(10)
 
       **************************************************************************
-                R IMAPVWZC                   SFLCTL(IMAPVWZS)
-                                             CF01
-                                             KEEP
-                                             OVERLAY
-                                             PUTRETAIN
-                                             SFLDSP
-                                             SFLDSPCTL
-                                             SFLINZ
-       N88                                   SFLEND
-                                             SFLSIZ(2)
-                                             SFLPAG(1)
-                  PGMQUEUE                   SFLPGMQ(10)
+                R IMAPVWZC                  SFLCTL(IMAPVWZS)
+                                            CF01
+                                            KEEP
+                                            OVERLAY
+                                            PUTRETAIN
+                                            SFLDSP
+                                            SFLDSPCTL
+                                            SFLINZ
+       N88                                  SFLEND
+                                            SFLSIZ(2)
+                                            SFLPAG(1)
+                  PGMQUEUE                  SFLPGMQ(10)
 
       **************************************************************************
                 R IMAPVWW0                  OVERLAY
@@ -83,6 +88,17 @@
                                             CSRLOC(W0CROW W0CCOL)
                                             RTNCSRLOC(*MOUSE  &W0CROW &W0CCOL)
                                             RTNCSRLOC(&W0CRCD &W0CFLD &W0CPOS)
+                                            HLPTITLE('Connect to host')
+                H                           HLPPNLGRP('HOST' IMAPVW)
+                                            HLPARA(*FLD W0HOST)
+                H                           HLPPNLGRP('USER' IMAPVW)
+                                            HLPARA(*FLD W0USER)
+                H                           HLPPNLGRP('PASS' IMAPVW)
+                                            HLPARA(*FLD W0PASS)
+                H                           HLPPNLGRP('TLS' IMAPVW)
+                                            HLPARA(*FLD W0UTLS)
+                H                           HLPPNLGRP('IMAPVWW0' IMAPVW)
+                                            HLPARA(*RCD)
 
                   W0CROW         3S 0H
                   W0CCOL         3S 0H
@@ -105,3 +121,4 @@
                                             CHECK(LC) DSPATR(ND)
                   W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
+

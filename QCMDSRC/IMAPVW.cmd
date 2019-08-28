@@ -1,5 +1,6 @@
              CMD        PROMPT(C000000) PMTFILE(*LIBL/IMAPMSG) +
-                          TEXT(*CMDPMT) ALWLMTUSR(*NO) AUT(*USE)
+                          TEXT(*CMDPMT) ALWLMTUSR(*NO) HLPID(*CMD) +
+                          HLPPNLGRP(IMAPVW) AUT(*USE)
              PARM       KWD(HOST) TYPE(*CHAR) LEN(16) CASE(*MIXED) +
                           PROMPT(C000001)
              PARM       KWD(USER) TYPE(*CHAR) LEN(32) CASE(*MIXED) +

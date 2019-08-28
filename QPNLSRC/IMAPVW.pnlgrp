@@ -1,0 +1,85 @@
+:PNLGRP.
+:HELP NAME='IMAPVW'.IMAP-Mail-Viewer - Help
+:P.Simple IMAP-Mail-Viewer with automatical display refresh and TLS-support.
+:EHELP.
+
+:HELP NAME='IMAPVW/HOST'.Host - Help
+:XH3.Hostname or ip-address
+:P.Insert the hostname or ip-address from your mail-server.
+:EHELP.
+
+:HELP NAME='IMAPVW/USER'.Username - Help
+:XH3.Username
+:P.Insert your username.
+:EHELP.
+
+:HELP NAME='IMAPVW/PASS'.Password - Help
+:XH3.Password
+:P.Insert your password for your username.
+:EHELP.
+
+:HELP NAME='IMAPVW/TLS'.Use TLS - Help
+:XH3.Use Transport layer security
+:P.Please select one of the following choices:
+:PARML.
+:PT.:PV.*YES:EPV.
+:PD.Send data over TLS.
+:PT.:PK DEF.*NO:EPK.
+:PD.Send data without using TLS.
+:EPARML.
+:EHELP.
+
+:HELP NAME='IMAPVW/REFRESH'.Refresh display - Help
+:XH3.Automatic refresh the display in seconds
+:P.Insert a value between 1 and 60 to refresh your display.
+:EHELP.
+
+:HELP NAME='IMAPVWAC'.Simple IMAP-Mail-Viewer - Shorthelp
+:P.This program shows you the:HP3.first 60 mails:EHP3.in your inbox.
+:P.The display will be refreshed automatic on base of the selected seconds.
+:XH4.The following function keys are valid:
+:SL.
+:LI.F01 = Show help
+:LI.F03 = Quit program
+:LI.F05 = Refresh display
+:LI.F06 = Reconnect to host or change login data
+:LI.F09 = Show commandline
+:ESL.
+:EHELP.
+
+:HELP NAME='IMAPVWW0'.Connect to host - Shorthelp
+:P.Please insert your login-informations to connect or reconnect.
+:XH4.The following function keys are valid:
+:SL.
+:LI.F01 = Show help
+:LI.F03 = Quit program
+:ESL.
+:EHELP.
+
+:HELP NAME='HOST'.Host - Help
+:XH3.Hostname or ip-address
+:P.Insert the hostname or ip-address from your mail-server.
+:EHELP.
+
+:HELP NAME='USER'.Username - Help
+:XH3.Username
+:P.Insert your username.
+:EHELP.
+
+:HELP NAME='PASS'.Password - Help
+:XH3.Password
+:P.Insert your password for your username.
+:EHELP.
+
+:HELP NAME='TLS'.Use TLS - Help
+:XH3.Use Transport layer security
+:P.Please select one of the following choices:
+:PARML.
+:PT.:PV.*YES:EPV.
+:PD.Send data over TLS.
+:PT.:PK DEF.*NO:EPK.
+:PD.Send data without using TLS.
+:EPARML.
+:EHELP.
+
+:EPNLGRP.
