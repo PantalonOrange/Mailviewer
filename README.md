@@ -8,7 +8,7 @@ This program uses the socket header from the socket api owned by scott klement
 
 All copyfiles are included (QRPGLECPY)
 
-Caution! Pre-Alpha version
+Caution! Alpha version
 
 ### Create objects:
 To create the objects copy the sources to your sourcefiles (qrpglesrc, qcmdsrc, etc) and compile them via seu-option "14"
