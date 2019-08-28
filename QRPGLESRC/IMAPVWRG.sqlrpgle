@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 27.08.2019
+// Created by BRC on 09.08.2019 - 28.08.2019
 
 // Simple imap client
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -56,9 +56,9 @@ END-DS;
 
 
 DCL-PR Main EXTPGM('IMAPVWRG');
-  Host CHAR(16) CONST;
-  User CHAR(32) CONST;
-  Password CHAR(32) CONST;
+  Host CHAR(32) CONST;
+  User CHAR(64) CONST;
+  Password CHAR(64) CONST;
   UseTLS IND CONST;
   Port UNS(5) CONST;
   RefreshSeconds PACKED(2 :0) CONST;
@@ -96,15 +96,16 @@ DCL-DS This QUALIFIED;
   GlobalMessage CHAR(130) INZ;
   RecordsFound UNS(10) INZ;
   Connected IND INZ(FALSE);
+  DominoSpecial IND INZ(FALSE);
   LogInDataDS LIKEDS(LogInDataDS_T) INZ;
   SocketDS LIKEDS(SocketDS_T) INZ;
   GSKDS LIKEDS(GSKDS_T) INZ;
 END-DS;
 
 DCL-DS LogInDataDS_T QUALIFIED TEMPLATE;
-  Host CHAR(16);
-  User CHAR(32);
-  Password CHAR(32);
+  Host CHAR(32);
+  User CHAR(64);
+  Password CHAR(64);
   UseTLS IND;
   Port UNS(5);
 END-DS;
@@ -129,9 +130,9 @@ END-DS;
 //#########################################################################
 DCL-PROC Main;
  DCL-PI *N;
-   pHost CHAR(16) CONST;
-   pUser CHAR(32) CONST;
-   pPassword CHAR(32) CONST;
+   pHost CHAR(32) CONST;
+   pUser CHAR(64) CONST;
+   pPassword CHAR(64) CONST;
    pUseTLS IND CONST;
    pPort UNS(5) CONST;
    pRefreshSeconds PACKED(2 :0) CONST;
@@ -173,9 +174,9 @@ END-PROC;
 //**************************************************************************
 DCL-PROC loopFM_A;
  DCL-PI *N;
-   pHost CHAR(16) CONST;
-   pUser CHAR(32) CONST;
-   pPassword CHAR(32) CONST;
+   pHost CHAR(32) CONST;
+   pUser CHAR(64) CONST;
+   pPassword CHAR(64) CONST;
    pUseTLS IND CONST;
    pPort UNS(5) CONST;
    pRefreshSeconds PACKED(2 :0) CONST;
@@ -251,9 +252,9 @@ END-PROC;
 //**************************************************************************
 DCL-PROC initFM_A;
  DCL-PI *N IND;
-   pHost CHAR(16) CONST;
-   pUser CHAR(32) CONST;
-   pPassword CHAR(32) CONST;
+   pHost CHAR(32) CONST;
+   pUser CHAR(64) CONST;
+   pPassword CHAR(64) CONST;
    pUseTLS IND CONST;
    pPort UNS(5) CONST;
    pRefreshSeconds PACKED(2 :0) CONST;
@@ -537,6 +538,7 @@ DCL-PROC connectToHost;
    translateData(%Addr(Data) :ASCII :LOCAL);
    Success = ( %Scan('OK' :Data) > 0 );
    If Success;
+     This.DominoSpecial = ( %Scan('Domino' :Data) > 0 );
      Data = 'a LOGIN ' + %TrimR(This.LogInDataDS.User) + ' ' +
             %TrimR(This.LogInDataDS.Password) + CRLF;
      translateData(%Addr(Data) :LOCAL :ASCII);
@@ -748,6 +750,9 @@ DCL-PROC readMailsFromInbox;
          EndIf;
          b += 1;
          pMailDS(b) = extractFieldsFromStream(%Addr(Data));
+         If Not This.DominoSpecial;
+           RC = recieveData(%Addr(Data) :%Size(Data));
+         EndIf;
        EndIf;
      EndIf;
    EndFor;

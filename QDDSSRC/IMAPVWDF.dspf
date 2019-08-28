@@ -80,7 +80,7 @@
 
       **************************************************************************
                 R IMAPVWW0                  OVERLAY
-                                            WINDOW(10 20 10 46 *NOMSGLIN)
+                                            WINDOW(8 10 10 80 *NOMSGLIN)
                                             WDWBORDER((*CHAR '        ') +
                                                       (*DSPATR RI)       +
                                                       (*COLOR BLU))
@@ -116,11 +116,11 @@
                   W0CPORT        9A  O  7  2MSGID(C000016 *LIBL/IMAPMSG)
                   W0CFOOT       30A  O  9  2MSGID(C000014 *LIBL/IMAPMSG)
                                             COLOR(BLU)
-                  W0HOST        16A  B  3 12COLOR(TRQ) ALIAS(W0_HOST)
+                  W0HOST        32A  B  3 12COLOR(TRQ) ALIAS(W0_HOST)
                                             CHECK(LC)
-                  W0USER        32A  B  4 12COLOR(TRQ) ALIAS(W0_USER)
+                  W0USER        64A  B  4 12COLOR(TRQ) ALIAS(W0_USER)
                                             CHECK(LC)
-                  W0PASS        32A  B  5 12COLOR(TRQ) ALIAS(W0_PASSWORD)
+                  W0PASS        64A  B  5 12COLOR(TRQ) ALIAS(W0_PASSWORD)
                                             CHECK(LC) DSPATR(ND)
                   W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
