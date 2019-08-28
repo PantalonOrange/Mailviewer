@@ -10,12 +10,14 @@
 
 :HELP NAME='IMAPVW/USER'.Username - Help
 :XH3.Username
-:P.Insert your username.
+:P.Please insert your username or mailaddress.
+:P.With the specialvalue:HP2.*CURRENT:EHP2.the program read your username or
+mailaddress from the systemdirectory.
 :EHELP.
 
 :HELP NAME='IMAPVW/PASS'.Password - Help
 :XH3.Password
-:P.Insert your password for your username.
+:P.Please insert your password for the username.
 :EHELP.
 
 :HELP NAME='IMAPVW/TLS'.Use TLS - Help
@@ -29,13 +31,21 @@
 :EPARML.
 :EHELP.
 
-:HELP NAME='IMAPVW/REFRESH'.Refresh display - Help
-:XH3.Automatic refresh the display in seconds
+:HELP NAME='IMAPVW/PORT'.Serverport - Help
+:XH3.Serverport
+:P.Serverport on the remote system.
+:P.With the specialvalue:HP2.*DFT:EHP2.the program use the default port for
+imap or imap over TLS (see parameter TLS).
+:EHELP.
+
+:HELP NAME='IMAPVW/REFRESH'.Autorefresh - Help
+:XH3.Automatic refresh for the display in seconds
 :P.Insert a value between 1 and 60 to refresh your display.
+:P.The specialvalue:HP2.*DFT:EHP2.set 10 seconds.
 :EHELP.
 
 :HELP NAME='IMAPVWAC'.Simple IMAP-Mail-Viewer - Shorthelp
-:P.This program shows you the:HP3.first 60 mails:EHP3.in your inbox.
+:P.This program shows you the:HP2.first 60 mails:EHP2.in your inbox.
 :P.The display will be refreshed automatic on base of the selected seconds.
 :XH4.The following function keys are valid:
 :SL.
@@ -63,12 +73,14 @@
 
 :HELP NAME='USER'.Username - Help
 :XH3.Username
-:P.Insert your username.
+:P.Insert your username or mailaddress.
+:P.With the specialvalue:HP2.*CURRENT:EHP2.the program read your username or
+mailaddress from the systemdirectory.
 :EHELP.
 
 :HELP NAME='PASS'.Password - Help
 :XH3.Password
-:P.Insert your password for your username.
+:P.Please insert your password for the username.
 :EHELP.
 
 :HELP NAME='TLS'.Use TLS - Help
@@ -80,6 +92,13 @@
 :PT.:PK DEF.*NO:EPK.
 :PD.Send data without using TLS.
 :EPARML.
+:EHELP.
+
+:HELP NAME='PORT'.Serverport - Help
+:XH3.Serverport
+:P.Serverport on the remote system.
+:P.With the specialvalue:HP2.0:EHP2.the program use the default port for
+imap or imap over TLS (see parameter TLS).
 :EHELP.
 
 :EPNLGRP.

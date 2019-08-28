@@ -65,6 +65,9 @@
                           MSG('TLS.....:')
              ADDMSGD    MSGID(C000014) MSGF(&LIB/IMAPMSG) +
                           MSG('F3=Return')
+             ADDMSGD    MSGID(C000015) MSGF(&LIB/IMAPMSG) MSG('Port')
+             ADDMSGD    MSGID(C000016) MSGF(&LIB/IMAPMSG) +
+                          MSG('Port....:')
              ADDMSGD    MSGID(E000000) MSGF(&LIB/IMAPMSG) MSG('Wrong +
                           login-data')
              ADDMSGD    MSGID(E000001) MSGF(&LIB/IMAPMSG) +
@@ -85,6 +88,8 @@
                           SRCMBR(IMAPVWDF)
              CRTBNDRPG  PGM(&LIB/IMAPVWRG) SRCFILE(&SRC/QRPGLESRC) +
                           SRCMBR(IMAPVWRG) DBGVIEW(*SOURCE)
+             CRTPNLGRP  PNLGRP(&LIB/IMAPVR) SRCFILE(&SRC/QPNLSRC) +
+                          SRCMBR(*PNLGRP)
 
 /* Quit program */
              SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('Objects +

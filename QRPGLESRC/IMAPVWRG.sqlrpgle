@@ -60,7 +60,8 @@ DCL-PR Main EXTPGM('IMAPVWRG');
   User CHAR(32) CONST;
   Password CHAR(32) CONST;
   UseTLS IND CONST;
-  Seconds PACKED(2 :0) CONST;
+  Port UNS(5) CONST;
+  RefreshSeconds PACKED(2 :0) CONST;
 END-PR;
 
 
@@ -104,6 +105,7 @@ DCL-DS LogInDataDS_T QUALIFIED TEMPLATE;
   User CHAR(32);
   Password CHAR(32);
   UseTLS IND;
+  Port UNS(5);
 END-DS;
 DCL-DS SocketDS_T QUALIFIED TEMPLATE;
   ConnectTo POINTER;
@@ -130,9 +132,12 @@ DCL-PROC Main;
    pUser CHAR(32) CONST;
    pPassword CHAR(32) CONST;
    pUseTLS IND CONST;
-   pSeconds PACKED(2 :0) CONST;
+   pPort UNS(5) CONST;
+   pRefreshSeconds PACKED(2 :0) CONST;
  END-PI;
  //------------------------------------------------------------------------
+
+ /INCLUDE QRPGLECPY,SQLOPTIONS
 
  Reset This;
 
@@ -146,7 +151,7 @@ DCL-PROC Main;
  DoU ( This.PictureControl = FM_END );
    Select;
      When ( This.PictureControl = FM_A );
-       loopFM_A(pHost :pUser :pPassword :pUseTLS :pSeconds);
+       loopFM_A(pHost :pUser :pPassword :pUseTLS :pPort :pRefreshSeconds);
      Other;
        This.PictureControl = FM_END;
    EndSl;
@@ -171,7 +176,8 @@ DCL-PROC loopFM_A;
    pUser CHAR(32) CONST;
    pPassword CHAR(32) CONST;
    pUseTLS IND CONST;
-   pSeconds PACKED(2 :0) CONST;
+   pPort UNS(5) CONST;
+   pRefreshSeconds PACKED(2 :0) CONST;
  END-PI;
 
  /INCLUDE QRPGLECPY,QRCVDTAQ
@@ -186,7 +192,7 @@ DCL-PROC loopFM_A;
  DCL-DS FMA LIKEREC(IMAPVWAC :*ALL) INZ;
  //-------------------------------------------------------------------------
 
- Success = initFM_A(pHost :pUser :pPassword :pUseTLS :pSeconds);
+ Success = initFM_A(pHost :pUser :pPassword :pUseTLS :pPort :pRefreshSeconds);
 
  fetchRecordsFM_A();
 
@@ -216,20 +222,20 @@ DCL-PROC loopFM_A;
 
    Select;
 
-     When ( WSDS.Exit );
+     When WSDS.Exit;
        This.PictureControl = FM_END;
        If This.Connected;
          disconnectFromHost();
        EndIf;
 
-     When ( WSDS.Refresh );
+     When WSDS.Refresh;
        fetchRecordsFM_A();
 
-     When ( WSDS.ReConnect );
+     When WSDS.ReConnect;
        reConnectToHost();
        fetchRecordsFM_A();
 
-     When ( WSDS.CommandLine );
+     When WSDS.CommandLine;
        promptCommandLine();
 
      Other;
@@ -248,7 +254,8 @@ DCL-PROC initFM_A;
    pUser CHAR(32) CONST;
    pPassword CHAR(32) CONST;
    pUseTLS IND CONST;
-   pSeconds PACKED(2 :0) CONST;
+   pPort UNS(5) CONST;
+   pRefreshSeconds PACKED(2 :0) CONST;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
@@ -263,21 +270,35 @@ DCL-PROC initFM_A;
  If ( pHost <> '' );
    This.LogInDataDS.Host = pHost;
  EndIf;
- If ( pUser <> '' );
+ 
+ If ( pUser = '*CURRENT' );
+   This.LogInDataDS.User = retrieveCurrentUserAddress();
+ ElseIf ( pUser <> '' );
    This.LogInDataDS.User = pUser;
  EndIf;
+ 
  If ( pPassword <> '' );
    This.LogInDataDS.Password = pPassword;
  EndIf;
+ 
  This.LogInDataDS.UseTLS = pUseTLS;
- If ( pSeconds > 0 );
-   This.RefreshSeconds = pSeconds;
+ 
+ If ( pPort = 0 ) And This.LogInDataDS.UseTLS;
+   This.LogInDataDS.Port = TLS_PORT;
+ ElseIf ( pPort = 0 ) And Not This.LogInDataDS.UseTLS;
+   This.LogInDataDS.Port = DEFAULT_PORT;
+ Else;
+   This.LogInDataDS.Port = pPort;
+ EndIf;
+
+ If ( pRefreshSeconds > 0 );
+   This.RefreshSeconds = pRefreshSeconds;
  Else;
    This.RefreshSeconds = 10;
  EndIf;
-
+ 
  If ( This.LogInDataDS.Host = '' ) Or ( This.LogInDataDS.User = '' )
-  Or ( This.LogInDataDS.Password = '' );
+  Or ( This.LogInDataDS.Password = '' ) Or ( This.LogInDataDS.Port = 0 );
    Success = askForLogInData();
  EndIf;
 
@@ -286,7 +307,7 @@ DCL-PROC initFM_A;
    Success = This.Connected;
    If Success;
      AC_Mail = This.LogInDataDS.User;
-     If ( This.LogInDataDS.UseTLS );
+     If This.LogInDataDS.UseTLS;
        AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
      EndIf;
    Else;
@@ -336,7 +357,7 @@ DCL-PROC fetchRecordsFM_A;
 
    For i = 1 To This.RecordsFound;
 
-     If ( MailDS(i).UnSeenFlag );
+     If MailDS(i).UnSeenFlag;
        SubfileDS.Color1 = COLOR_YLW_RI;
      Else;
        SubfileDS.Color1 = COLOR_GRN;
@@ -382,18 +403,19 @@ DCL-PROC askForLoginData;
  W0_Host = This.LogInDataDS.Host;
  W0_User = This.LogInDataDS.User;
  W0_Password = This.LogInDataDS.Password;
- If ( This.LogInDataDS.UseTLS );
+ If This.LogInDataDS.UseTLS;
    W0_Use_TLS = '*YES';
  Else;
    W0_Use_TLS = '*NO';
  EndIf;
+ W0_Port = This.LogInDataDS.Port;
 
- DoU ( WSDS.Exit = TRUE );
+ DoU WSDS.Exit;
 
    Write IMAPVWW0;
    ExFmt IMAPVWW0;
 
-   If ( WSDS.Exit );
+   If WSDS.Exit;
      Clear IMAPVWW0;
      Success = FALSE;
      Leave;
@@ -415,9 +437,20 @@ DCL-PROC askForLoginData;
        W0CCol = 12;
      Else;
        This.LogInDataDS.Host = %Trim(W0_Host);
-       This.LogInDataDS.User = %Trim(W0_User);
+       If ( W0_User = '*CURRENT' );
+         This.LogInDataDS.User = retrieveCurrentUserAddress();
+       Else;
+         This.LogInDataDS.User = %Trim(W0_User);
+       EndIf;
        This.LogInDataDS.Password = %Trim(W0_Password);
        This.LogInDataDS.UseTLS = ( W0_Use_TLS = '*YES' );
+       If ( W0_Port = 0 ) And This.LogInDataDS.UseTLS;
+         This.LogInDataDS.Port = TLS_PORT;
+       ElseIf ( W0_Port = 0 ) And Not This.LogInDataDS.UseTLS;
+         This.LogInDataDS.Port = DEFAULT_PORT;
+       Else;
+         This.LogInDataDS.Port = W0_Port;
+       EndIf;
        Leave;
      EndIf;
    EndIf;
@@ -483,11 +516,7 @@ DCL-PROC connectToHost;
    P_SockAddr = This.SocketDS.ConnectTo;
    Sin_Family = AF_INET;
    Sin_Addr = This.SocketDS.Address;
-   If This.LogInDataDS.UseTLS;
-     Sin_port = TLS_PORT;
-   Else;
-     Sin_Port = DEFAULT_PORT;
-   EndIf;
+   Sin_Port = This.LogInDataDS.Port;
    Sin_Zero = *ALLx'00';
 
    If ( connect(This.SocketDS.SocketHandler :This.SocketDS.ConnectTo
@@ -570,7 +599,7 @@ DCL-PROC reConnectToHost;
    Success = This.Connected;
    If Success;
      AC_Mail = This.LogInDataDS.User;
-     If ( This.LogInDataDS.UseTLS );
+     If This.LogInDataDS.UseTLS;
        AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
      EndIf;
    Else;
@@ -837,6 +866,27 @@ DCL-PROC cleanUp_Socket;
    gsk_Environment_Close(This.GSKDS.Environment);
  EndIf;
  close_Socket(This.SocketDS.SocketHandler);
+
+END-PROC;
+
+
+//**************************************************************************
+DCL-PROC retrieveCurrentUserAddress;
+ DCL-PI *N CHAR(32) END-PI;
+
+ DCL-S MailAddress CHAR(32) INZ;
+ //-------------------------------------------------------------------------
+
+ Exec SQL SELECT RTRIM(SMTPUID) CONCAT '@' CONCAT RTRIM(DOMROUTE)
+            INTO :MailAddress
+            FROM QUSRSYS.QATMSMTPA
+            JOIN QUSRSYS.QAOKL02A ON (USERID = WOS1DDEN AND ADDRESS = WOS1DDGN)
+           WHERE WOS1USRP = USER;
+ If ( SQLCode = 100 );
+   Clear MailAddress;
+ EndIf;
+ 
+ Return MailAddress;
 
 END-PROC;
 

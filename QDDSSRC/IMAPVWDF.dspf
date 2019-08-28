@@ -80,7 +80,7 @@
 
       **************************************************************************
                 R IMAPVWW0                  OVERLAY
-                                            WINDOW(10 20 09 46 *NOMSGLIN)
+                                            WINDOW(10 20 10 46 *NOMSGLIN)
                                             WDWBORDER((*CHAR '        ') +
                                                       (*DSPATR RI)       +
                                                       (*COLOR BLU))
@@ -97,6 +97,8 @@
                                             HLPARA(*FLD W0PASS)
                 H                           HLPPNLGRP('TLS' IMAPVW)
                                             HLPARA(*FLD W0UTLS)
+                H                           HLPPNLGRP('PORT' IMAPVW)
+                                            HLPARA(*FLD W0PORT)
                 H                           HLPPNLGRP('IMAPVWW0' IMAPVW)
                                             HLPARA(*RCD)
 
@@ -111,7 +113,8 @@
                   W0CUSER        9A  O  4  2MSGID(C000011 *LIBL/IMAPMSG)
                   W0CPASS        9A  O  5  2MSGID(C000012 *LIBL/IMAPMSG)
                   W0CUTLS        9A  O  6  2MSGID(C000013 *LIBL/IMAPMSG)
-                  W0CFOOT       30A  O  8  2MSGID(C000014 *LIBL/IMAPMSG)
+                  W0CPORT        9A  O  7  2MSGID(C000016 *LIBL/IMAPMSG)
+                  W0CFOOT       30A  O  9  2MSGID(C000014 *LIBL/IMAPMSG)
                                             COLOR(BLU)
                   W0HOST        16A  B  3 12COLOR(TRQ) ALIAS(W0_HOST)
                                             CHECK(LC)
@@ -121,4 +124,6 @@
                                             CHECK(LC) DSPATR(ND)
                   W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
+                  W0PORT         5  0B  7 12COLOR(TRQ) ALIAS(W0_PORT)
+                                            RANGE(0 65535)
 
