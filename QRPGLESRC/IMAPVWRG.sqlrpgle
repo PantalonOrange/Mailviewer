@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 28.08.2019
+// Created by BRC on 09.08.2019 - 29.08.2019
 
 // Simple imap client
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -30,7 +30,7 @@
 // TO-DOs:
 //  + Improve field-extraction from incoming imap-stream
 //  + Improve errorhandling and messages
-//  + Decode Base64-encoded subjects
+//  + Decode base64-encoded subjects (different ccsids!)
 
 
 /INCLUDE QRPGLECPY,H_SPECS
@@ -41,22 +41,8 @@ DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
                SFILE(IMAPVWAS :RecordNumber) USROPN;
 
 
-/INCLUDE QRPGLECPY,PSDS
-DCL-DS WSDS QUALIFIED;
-  Exit IND POS(3);
-  Refresh IND POS(5);
-  ReConnect IND POS(6);
-  CommandLine IND POS(9);
-  Cancel IND POS(12);
-  SubfileClear IND POS(20);
-  SubfileDisplayControl IND POS(21);
-  SubfileDisplay IND POS(22);
-  SubfileMore IND POS(23);
-END-DS;
-
-
 DCL-PR Main EXTPGM('IMAPVWRG');
-  Host CHAR(32) CONST;
+  Host CHAR(64) CONST;
   User CHAR(64) CONST;
   Password CHAR(64) CONST;
   UseTLS IND CONST;
@@ -83,9 +69,9 @@ DCL-C LOCAL 0;
 DCL-C UTF8 1208;
 DCL-C ASCII 1252;
 DCL-C CRLF X'0D25';
-DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
 
+/INCLUDE QRPGLECPY,PSDS
 DCL-S RecordNumber UNS(10) INZ;
 DCL-S PgmQueue CHAR(10) INZ('MAIN');
 DCL-S CallStack INT(10) INZ;
@@ -102,23 +88,38 @@ DCL-DS This QUALIFIED;
   GSKDS LIKEDS(GSKDS_T) INZ;
 END-DS;
 
+DCL-DS WSDS QUALIFIED;
+  Exit IND POS(3);
+  Refresh IND POS(5);
+  ReConnect IND POS(6);
+  CommandLine IND POS(9);
+  Cancel IND POS(12);
+  SubfileClear IND POS(20);
+  SubfileDisplayControl IND POS(21);
+  SubfileDisplay IND POS(22);
+  SubfileMore IND POS(23);
+END-DS;
+
 DCL-DS LogInDataDS_T QUALIFIED TEMPLATE;
-  Host CHAR(32);
+  Host CHAR(64);
   User CHAR(64);
   Password CHAR(64);
   UseTLS IND;
   Port UNS(5);
 END-DS;
+
 DCL-DS SocketDS_T QUALIFIED TEMPLATE;
   ConnectTo POINTER;
   SocketHandler INT(10);
   Address UNS(10);
   AddressLength INT(10);
 END-DS;
+
 DCL-DS GSKDS_T QUALIFIED TEMPLATE;
   Environment POINTER;
   SecureHandler POINTER;
 END-DS;
+
 DCL-DS MailDS_T QUALIFIED TEMPLATE;
   Sender CHAR(128);
   SendDate CHAR(25);
@@ -130,7 +131,7 @@ END-DS;
 //#########################################################################
 DCL-PROC Main;
  DCL-PI *N;
-   pHost CHAR(32) CONST;
+   pHost CHAR(64) CONST;
    pUser CHAR(64) CONST;
    pPassword CHAR(64) CONST;
    pUseTLS IND CONST;
@@ -151,12 +152,17 @@ DCL-PROC Main;
  EndIf;
 
  DoU ( This.PictureControl = FM_END );
+
    Select;
+
      When ( This.PictureControl = FM_A );
        loopFM_A(pHost :pUser :pPassword :pUseTLS :pPort :pRefreshSeconds);
+
      Other;
        This.PictureControl = FM_END;
+
    EndSl;
+
  EndDo;
 
  If %Open(IMAPVWDF);
@@ -174,7 +180,7 @@ END-PROC;
 //**************************************************************************
 DCL-PROC loopFM_A;
  DCL-PI *N;
-   pHost CHAR(32) CONST;
+   pHost CHAR(64) CONST;
    pUser CHAR(64) CONST;
    pPassword CHAR(64) CONST;
    pUseTLS IND CONST;
@@ -200,7 +206,6 @@ DCL-PROC loopFM_A;
 
  DoW ( This.PictureControl = FM_A );
 
-   AFLin01 = %TrimR(retrieveMessageText('C000005')) + ' ' + %Char(This.RefreshSeconds) + 's';
    AC_Refresh = This.RefreshSeconds;
 
    Write IMAPVWAF;
@@ -252,15 +257,20 @@ END-PROC;
 //**************************************************************************
 DCL-PROC initFM_A;
  DCL-PI *N IND;
-   pHost CHAR(32) CONST;
-   pUser CHAR(64) CONST;
-   pPassword CHAR(64) CONST;
+   pHostDS LIKEDS(CommandVaryingParmDS_T) CONST;
+   pUserDS LIKEDS(CommandVaryingParmDS_T) CONST;
+   pPasswordDS LIKEDS(CommandVaryingParmDS_T) CONST;
    pUseTLS IND CONST;
    pPort UNS(5) CONST;
    pRefreshSeconds PACKED(2 :0) CONST;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
+
+ DCL-DS CommandVaryingParmDS_T QUALIFIED TEMPLATE;
+   Length UNS(5);
+   Data CHAR(62);
+ END-DS;
  //-------------------------------------------------------------------------
 
  Reset RecordNumber;
@@ -269,18 +279,18 @@ DCL-PROC initFM_A;
 
  AC_Device = PSDS.JobName;
 
- If ( pHost <> '' );
-   This.LogInDataDS.Host = pHost;
+ If ( pHostDS.Length > 0 );
+   This.LogInDataDS.Host = pHostDS.Data;
  EndIf;
 
- If ( pUser = '*CURRENT' );
+ If ( pUserDS.Data = '*CURRENT' );
    This.LogInDataDS.User = retrieveCurrentUserAddress();
- ElseIf ( pUser <> '' );
-   This.LogInDataDS.User = pUser;
+ ElseIf ( pUserDS.Length > 0 );
+   This.LogInDataDS.User = pUserDS.Data;
  EndIf;
 
- If ( pPassword <> '' );
-   This.LogInDataDS.Password = pPassword;
+ If ( pPasswordDS.Length > 0 );
+   This.LogInDataDS.Password = pPasswordDS.Data;
  EndIf;
 
  This.LogInDataDS.UseTLS = pUseTLS;
@@ -310,7 +320,7 @@ DCL-PROC initFM_A;
    If Success;
      AC_Mail = This.LogInDataDS.User;
      If This.LogInDataDS.UseTLS;
-       AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
+       AC_Mail = %TrimR(AC_Mail) + ' (Secure)';
      EndIf;
    Else;
      AC_Mail = retrieveMessageText('M000003');
@@ -421,40 +431,52 @@ DCL-PROC askForLoginData;
      Clear IMAPVWW0;
      Success = FALSE;
      Leave;
+
    Else;
-     If ( W0_Host = '' );
-       W0CRow = 3;
-       W0CCol = 12;
-       Iter;
-     ElseIf ( W0_User = '' );
-       W0CRow = 4;
-       W0CCol = 12;
-       Iter;
-     ElseIf ( W0_Password = '' );
-       W0CRow = 5;
-       W0CCol = 12;
-       Iter;
-     ElseIf ( W0_Use_TLS <> '*YES' ) And ( W0_Use_TLS <> '*NO' );
-       W0CRow = 6;
-       W0CCol = 12;
-     Else;
-       This.LogInDataDS.Host = %Trim(W0_Host);
-       If ( W0_User = '*CURRENT' );
-         This.LogInDataDS.User = retrieveCurrentUserAddress();
-       Else;
-         This.LogInDataDS.User = %Trim(W0_User);
-       EndIf;
-       This.LogInDataDS.Password = %Trim(W0_Password);
-       This.LogInDataDS.UseTLS = ( W0_Use_TLS = '*YES' );
-       If ( W0_Port = 0 ) And This.LogInDataDS.UseTLS;
-         This.LogInDataDS.Port = TLS_PORT;
-       ElseIf ( W0_Port = 0 ) And Not This.LogInDataDS.UseTLS;
-         This.LogInDataDS.Port = DEFAULT_PORT;
-       Else;
-         This.LogInDataDS.Port = W0_Port;
-       EndIf;
-       Leave;
-     EndIf;
+
+     Select;
+
+       When ( W0_Host = '' );
+         W0_Current_Row = 3;
+         W0_Current_Column = 12;
+         Iter;
+
+       When ( W0_User = '' );
+         W0_Current_Row = 4;
+         W0_Current_Column = 12;
+         Iter;
+
+       When ( W0_Password = '' );
+         W0_Current_Row = 5;
+         W0_Current_Column = 12;
+         Iter;
+
+       When ( W0_Use_TLS <> '*YES' ) And ( W0_Use_TLS <> '*NO' );
+         W0_Current_Row = 6;
+         W0_Current_Column = 12;
+         Iter;
+
+       Other;
+         This.LogInDataDS.Host = %Trim(W0_Host);
+         If ( W0_User = '*CURRENT' );
+           This.LogInDataDS.User = retrieveCurrentUserAddress();
+         Else;
+           This.LogInDataDS.User = %Trim(W0_User);
+         EndIf;
+         This.LogInDataDS.Password = %Trim(W0_Password);
+         This.LogInDataDS.UseTLS = ( W0_Use_TLS = '*YES' );
+         If ( W0_Port = 0 ) And This.LogInDataDS.UseTLS;
+           This.LogInDataDS.Port = TLS_PORT;
+         ElseIf ( W0_Port = 0 ) And Not This.LogInDataDS.UseTLS;
+           This.LogInDataDS.Port = DEFAULT_PORT;
+         Else;
+           This.LogInDataDS.Port = W0_Port;
+         EndIf;
+
+         Leave;
+
+     EndSl;
+
    EndIf;
 
  EndDo;
@@ -503,11 +525,11 @@ DCL-PROC connectToHost;
      cleanUp_Socket();
      Success = FALSE;
    Else;
-     TimeOutDS.Seconds = 10;
-     setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_RCVTIMEO
-                :%Addr(TimeOutDS) :%Size(TimeOutDS));
-     setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_SNDTIMEO
-                :%Addr(TimeOutDS) :%Size(TimeOutDS));
+     TimeOutDS.Seconds = 2;
+     RC = setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_RCVTIMEO
+                     :%Addr(TimeOutDS) :%Size(TimeOutDS));
+     RC = setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_SNDTIMEO
+                     :%Addr(TimeOutDS) :%Size(TimeOutDS));
    EndIf;
  EndIf;
 
@@ -557,6 +579,7 @@ DCL-PROC connectToHost;
          Success = This.Connected;
        EndIf;
      EndIf;
+
    Else;
      This.GlobalMessage = %Str(strError(ErrNo));
      disconnectFromHost();
@@ -972,6 +995,8 @@ DCL-PROC retrieveMessageText;
  END-PI;
 
  /INCLUDE QRPGLECPY,QMHRTVM
+
+ DCL-C IMAPMSG 'IMAPMSG   *LIBL';
 
  DCL-S MessageData CHAR(16) INZ;
  DCL-S Error CHAR(128) INZ;
