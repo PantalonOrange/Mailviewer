@@ -21,7 +21,7 @@
 
 // Created by BRC on 09.08.2019 - 29.08.2019
 
-// Simple imap client
+// Simple imap viewer
 //   I use the socket_h header from scott klement - (c) Scott Klement
 //   https://www.scottklement.com/rpg/socktut/socktut.savf
 
@@ -30,7 +30,7 @@
 // TO-DOs:
 //  + Improve field-extraction from incoming imap-stream
 //  + Improve errorhandling and messages
-//  + Decode base64-encoded subjects (different ccsids!)
+//  + Decode base64-encoded subjects (different codepages)
 
 
 /INCLUDE QRPGLECPY,H_SPECS
@@ -214,7 +214,7 @@ DCL-PROC loopFM_A;
 
    clearMessages(PgmQueue :CallStack);
 
-   RecieveDataQueue('IMAPVW' :'QTEMP' :IncomingData.Length :IncomingData.Data
+   recieveDataQueue('IMAPVW' :'QTEMP' :IncomingData.Length :IncomingData.Data
                     :This.RefreshSeconds);
 
    If ( IncomingData.Data = '' );
@@ -494,7 +494,7 @@ DCL-PROC connectToHost;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(32766) INZ;
- 
+
  DCL-DS TimeOutDS QUALIFIED INZ;
    Seconds INT(10);
    MicroSeconds INT(10);
@@ -626,7 +626,7 @@ DCL-PROC reConnectToHost;
    If Success;
      AC_Mail = This.LogInDataDS.User;
      If This.LogInDataDS.UseTLS;
-       AC_Mail = %TrimR(AC_Mail) + ' (TLS)';
+       AC_Mail = %TrimR(AC_Mail) + ' (Secure)';
      EndIf;
    Else;
      AC_Mail = retrieveMessageText('M000003');
@@ -658,9 +658,11 @@ DCL-PROC generateGSKEnvironment;
    gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_SERVER_AUTH_TYPE :GSK_SERVER_AUTH_PASSTHRU);
    gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_CLIENT_AUTH_TYPE :GSK_CLIENT_AUTH_PASSTHRU);
 
-   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_SSLV2 :GSK_PROTOCOL_SSLV2_ON);
-   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_SSLV3 :GSK_PROTOCOL_SSLV3_ON);
+   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_SSLV2 :GSK_PROTOCOL_SSLV2_OFF);
+   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_SSLV3 :GSK_PROTOCOL_SSLV3_OFF);
    gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_TLSV1 :GSK_PROTOCOL_TLSV1_ON);
+   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_TLSV1_1 :GSK_TRUE);
+   gsk_Attribute_Set_eNum(This.GSKDS.Environment :GSK_PROTOCOL_TLSV1_2 :GSK_TRUE);
 
    RC = gsk_Environment_Init(This.GSKDS.Environment);
    If ( RC <> GSK_OK );
@@ -901,9 +903,9 @@ END-PROC;
 
 //**************************************************************************
 DCL-PROC retrieveCurrentUserAddress;
- DCL-PI *N CHAR(32) END-PI;
+ DCL-PI *N CHAR(64) END-PI;
 
- DCL-S MailAddress CHAR(32) INZ;
+ DCL-S MailAddress CHAR(64) INZ;
  //-------------------------------------------------------------------------
 
  Exec SQL SELECT RTRIM(SMTPUID) CONCAT '@' CONCAT RTRIM(DOMROUTE)
