@@ -546,6 +546,24 @@
 
 
      ** --------------------------------------------------------------------
+     **
+     **    qso_setsockopt98()--Set Socket Options Unix98 style
+     **
+     **    int  qso_setsockopt98(int socket_descriptor,
+     **                          int level,
+     **                          int option_name,
+     **                          char *option_value
+     **                          int option_length)
+     ** --------------------------------------------------------------------
+     D setSockOpt98    PR            10I 0 ExtProc('qso_setsockopt98')
+     D   SocketDesc                  10I 0 Value
+     D   Opt_Level                   10I 0 Value
+     D   Opt_Name                    10I 0 Value
+     D   Opt_Value                     *   Value
+     D   Opt_Len                     10I 0 Value
+
+
+     ** --------------------------------------------------------------------
      **   getsockopt() -- Retrieve Info about Socket Options
      **
      **   int getsockopt(int socket_descriptor,

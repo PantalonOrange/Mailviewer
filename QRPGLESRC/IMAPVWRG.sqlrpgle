@@ -494,7 +494,7 @@ DCL-PROC connectToHost;
  DCL-S RC INT(10) INZ;
  DCL-S ErrorNumber INT(10) INZ;
  DCL-S Data CHAR(32766) INZ;
-
+ 
  DCL-DS TimeOutDS QUALIFIED INZ;
    Seconds INT(10);
    MicroSeconds INT(10);
@@ -526,10 +526,10 @@ DCL-PROC connectToHost;
      Success = FALSE;
    Else;
      TimeOutDS.Seconds = 2;
-     RC = setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_RCVTIMEO
-                     :%Addr(TimeOutDS) :%Size(TimeOutDS));
-     RC = setSockOpt(This.SocketDS.SocketHandler :SOL_SOCKET :SO_SNDTIMEO
-                     :%Addr(TimeOutDS) :%Size(TimeOutDS));
+     setSockOpt98(This.SocketDS.SocketHandler :SOL_SOCKET :SO_RCVTIMEO
+                  :%Addr(TimeOutDS) :%Size(TimeOutDS));
+     setSockOpt98(This.SocketDS.SocketHandler :SOL_SOCKET :SO_SNDTIMEO
+                  :%Addr(TimeOutDS) :%Size(TimeOutDS));
    EndIf;
  EndIf;
 
