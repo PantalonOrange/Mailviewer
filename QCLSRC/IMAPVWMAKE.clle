@@ -41,33 +41,23 @@
              ADDMSGD    MSGID(C000002) MSGF(&LIB/IMAPMSG) MSG('User')
              ADDMSGD    MSGID(C000003) MSGF(&LIB/IMAPMSG) +
                           MSG('Password')
-             ADDMSGD    MSGID(C000004) MSGF(&LIB/IMAPMSG) +
-                          MSG('Secure connection')
-             ADDMSGD    MSGID(C000005) MSGF(&LIB/IMAPMSG) +
-                          MSG('Autorefresh')
+             ADDMSGD    MSGID(C000004) MSGF(&LIB/IMAPMSG) MSG('Use +
+                          TLS')
+             ADDMSGD    MSGID(C000005) MSGF(&LIB/IMAPMSG) MSG('Port')
              ADDMSGD    MSGID(C000006) MSGF(&LIB/IMAPMSG) +
+                          MSG('Autorefresh')
+             ADDMSGD    MSGID(C000007) MSGF(&LIB/IMAPMSG) +
                           MSG('Seconds')
-             ADDMSGD    MSGID(C000007) MSGF(&LIB/IMAPMSG) MSG(' +
+             ADDMSGD    MSGID(C000008) MSGF(&LIB/IMAPMSG) MSG(' +
                           From                                     +
                           | Date/Time                 | Subject')
-             ADDMSGD    MSGID(C000008) MSGF(&LIB/IMAPMSG) +
+             ADDMSGD    MSGID(C000009) MSGF(&LIB/IMAPMSG) +
                           MSG('F3=Quit   F5=Refresh   +
                           F6=Reconnect   F9=Command')
-             ADDMSGD    MSGID(C000009) MSGF(&LIB/IMAPMSG) +
-                          MSG('Connect to Mailserver')
              ADDMSGD    MSGID(C000010) MSGF(&LIB/IMAPMSG) +
-                          MSG('Host....:')
+                          MSG('Connect to Mailserver')
              ADDMSGD    MSGID(C000011) MSGF(&LIB/IMAPMSG) +
-                          MSG('User....:')
-             ADDMSGD    MSGID(C000012) MSGF(&LIB/IMAPMSG) +
-                          MSG('Password:')
-             ADDMSGD    MSGID(C000013) MSGF(&LIB/IMAPMSG) +
-                          MSG('TLS.....:')
-             ADDMSGD    MSGID(C000014) MSGF(&LIB/IMAPMSG) +
                           MSG('F3=Return')
-             ADDMSGD    MSGID(C000015) MSGF(&LIB/IMAPMSG) MSG('Port')
-             ADDMSGD    MSGID(C000016) MSGF(&LIB/IMAPMSG) +
-                          MSG('Port....:')
              ADDMSGD    MSGID(E000000) MSGF(&LIB/IMAPMSG) MSG('Wrong +
                           login-data')
              ADDMSGD    MSGID(E000001) MSGF(&LIB/IMAPMSG) +

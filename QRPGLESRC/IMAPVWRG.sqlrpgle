@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 29.08.2019
+// Created by BRC on 09.08.2019 - 05.09.2019
 
 // Simple imap viewer
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -412,6 +412,7 @@ DCL-PROC askForLoginData;
  DCL-S Success IND INZ(TRUE);
  //-------------------------------------------------------------------------
 
+ W0_Window_Title = retrieveMessageText('C000010');
  W0_Host = This.LogInDataDS.Host;
  W0_User = This.LogInDataDS.User;
  W0_Password = This.LogInDataDS.Password;

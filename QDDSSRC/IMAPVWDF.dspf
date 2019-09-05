@@ -30,8 +30,8 @@
                 H                           HLPPNLGRP('IMAPVWAC' IMAPVW)
                                             HLPARA(1 2 27 132)
 
-                  ACHEAD        40A     1  2MSGID(C000000 *LIBL/IMAPMSG)
-                                            COLOR(WHT)
+                  ACHEAD        60A     1  2MSGID(C000000 *LIBL/IMAPMSG)
+                                            COLOR(BLU)
                                         1100USER
                                         1112DATE EDTCDE(Y)
                                         1124TIME
@@ -42,20 +42,20 @@
                   ACCFLD        10A  H      ALIAS(AC_CURRENT_FIELD)
                   ACCPOS         4S 0H      ALIAS(AC_CURRENT_POSITION)
 
-                  ACREFR         2S 0B  2130COLOR(TRQ) ALIAS(AC_REFRESH)
+                  ACREFR         2S 0B  2130COLOR(YLW) ALIAS(AC_REFRESH)
                                             RANGE(1 60)
                   ACMAIL        60A  O  2  2ALIAS(AC_MAIL)
                                             COLOR(YLW)
                   ACDEVICE      10A  O  2100ALIAS(AC_DEVICE)
-                  ACHEAD0       16A  O  2112MSGID(C000005 *LIBL/IMAPMSG)
+                  ACHEAD0       16A  O  2112MSGID(C000006 *LIBL/IMAPMSG)
                   ACLIN00      130A  O  3  2DSPATR(UL) COLOR(BLU)
-                                            MSGID(C000007 *LIBL/IMAPMSG)
+                                            MSGID(C000008 *LIBL/IMAPMSG)
 
 
       **************************************************************************
                 R IMAPVWAF                  OVERLAY
                   AFLIN01      130A  O 25 02DSPATR(UL) COLOR(BLU)
-                  AFLIN02      130A  O 26 02MSGID(C000008 *LIBL/IMAPMSG)
+                  AFLIN02      130A  O 26 02MSGID(C000009 *LIBL/IMAPMSG)
                                             COLOR(BLU)
 
       **************************************************************************
@@ -80,10 +80,11 @@
 
       **************************************************************************
                 R IMAPVWW0                  OVERLAY
-                                            WINDOW(8 10 10 80 *NOMSGLIN)
+                                            WINDOW(9 27 08 76 *NOMSGLIN)
                                             WDWBORDER((*CHAR '        ') +
-                                                      (*DSPATR RI)       +
-                                                      (*COLOR BLU))
+                                                      (*DSPATR RI) (*COLOR BLU))
+                                            WDWTITLE((*TEXT &W0TITLE) +
+                                                      (*DSPATR RI) (*COLOR WHT))
                                             CA03(03) CA12(12)
                                             CSRLOC(W0CROW W0CCOL)
                                             RTNCSRLOC(*MOUSE  &W0CROW &W0CCOL)
@@ -102,28 +103,33 @@
                 H                           HLPPNLGRP('IMAPVWW0' IMAPVW)
                                             HLPARA(*RCD)
 
-                  W0CROW         3S 0H
-                  W0CCOL         3S 0H
-                  W0CRCD        10A  H
-                  W0CFLD        10A  H
-                  W0CPOS         4S 0H
+                  W0TITLE       60A  P      ALIAS(W0_WINDOW_TITLE)
+                  W0CROW         3S 0H      ALIAS(W0_CURRENT_ROW)
+                  W0CCOL         3S 0H      ALIAS(W0_CURRENT_COLUMN)
+                  W0CRCD        10A  H      ALIAS(W0_CURRENT_RECORD)
+                  W0CFLD        10A  H      ALIAS(W0_CURRENT_FIELD)
+                  W0CPOS         4S 0H      ALIAS(W0_CURRENT_POSITION)
 
-                  W0CHEAD       30A  O  1  2MSGID(C000009 *LIBL/IMAPMSG)
-                  W0CHOST        9A  O  3  2MSGID(C000010 *LIBL/IMAPMSG)
-                  W0CUSER        9A  O  4  2MSGID(C000011 *LIBL/IMAPMSG)
-                  W0CPASS        9A  O  5  2MSGID(C000012 *LIBL/IMAPMSG)
-                  W0CUTLS        9A  O  6  2MSGID(C000013 *LIBL/IMAPMSG)
-                  W0CPORT        9A  O  7  2MSGID(C000016 *LIBL/IMAPMSG)
-                  W0CFOOT       30A  O  9  2MSGID(C000014 *LIBL/IMAPMSG)
+                  W0CHOST        9A  O  2  2MSGID(C000001 *LIBL/IMAPMSG)
+                                            DSPATR(UL)
+                  W0CUSER        9A  O  3  2MSGID(C000002 *LIBL/IMAPMSG)
+                                            DSPATR(UL)
+                  W0CPASS        9A  O  4  2MSGID(C000003 *LIBL/IMAPMSG)
+                                            DSPATR(UL)
+                  W0CUTLS        9A  O  5  2MSGID(C000004 *LIBL/IMAPMSG)
+                                            DSPATR(UL)
+                  W0CPORT        9A  O  6  2MSGID(C000005 *LIBL/IMAPMSG)
+                                            DSPATR(UL)
+                  W0CFOOT       30A  O  7  2MSGID(C000011 *LIBL/IMAPMSG)
                                             COLOR(BLU)
-                  W0HOST        32A  B  3 12COLOR(TRQ) ALIAS(W0_HOST)
+                  W0HOST        32A  B  2 12COLOR(YLW) ALIAS(W0_HOST)
                                             CHECK(LC)
-                  W0USER        64A  B  4 12COLOR(TRQ) ALIAS(W0_USER)
+                  W0USER        64A  B  3 12COLOR(YLW) ALIAS(W0_USER)
                                             CHECK(LC)
-                  W0PASS        64A  B  5 12COLOR(TRQ) ALIAS(W0_PASSWORD)
+                  W0PASS        64A  B  4 12COLOR(YLW) ALIAS(W0_PASSWORD)
                                             CHECK(LC) DSPATR(ND)
-                  W0UTLS         4A  B  6 12COLOR(TRQ) ALIAS(W0_USE_TLS)
+                  W0UTLS         4A  B  5 12COLOR(YLW) ALIAS(W0_USE_TLS)
                                             VALUES('*YES' '*NO')
-                  W0PORT         5  0B  7 12COLOR(TRQ) ALIAS(W0_PORT)
+                  W0PORT         5  0B  6 12COLOR(YLW) ALIAS(W0_PORT)
                                             RANGE(0 65535)
 

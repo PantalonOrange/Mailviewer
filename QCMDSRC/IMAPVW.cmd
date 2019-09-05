@@ -20,9 +20,9 @@
 
              PARM       KWD(PORT) TYPE(*DEC) LEN(5) DFT(*DFT) +
                           RANGE(1 65535) SPCVAL((*DFT 0)) +
-                          PMTCTL(*PMTRQS) PROMPT(C000016)
+                          PMTCTL(*PMTRQS) PROMPT(C000005)
 
              PARM       KWD(REFRESH) TYPE(*DEC) LEN(2 0) DFT(*DFT) +
                           RANGE(1 60) SPCVAL((*DFT 10)) +
-                          CHOICE(C000006) PMTCTL(*PMTRQS) +
-                          PROMPT(C000005)
+                          CHOICE(C000007) PMTCTL(*PMTRQS) +
+                          PROMPT(C000006)
