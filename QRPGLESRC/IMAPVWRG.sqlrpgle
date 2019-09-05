@@ -421,7 +421,7 @@ DCL-PROC askForLoginData;
  Else;
    W0_Use_TLS = '*NO';
  EndIf;
- W0_Port = This.LogInDataDS.Port;
+ Clear W0_Port;
 
  DoU WSDS.Exit;
 
@@ -614,12 +614,12 @@ DCL-PROC reConnectToHost;
  DCL-S Success IND INZ(TRUE);
  //-------------------------------------------------------------------------
 
- If This.Connected;
-   disconnectFromHost();
- EndIf;
-
  Clear This.LogInDataDS.Password;
  Success = askForLogInData();
+ 
+ If Success And This.Connected;
+   disconnectFromHost();
+ EndIf;
 
  If Success;
    This.Connected = connectToHost();
