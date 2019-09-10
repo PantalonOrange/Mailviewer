@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 05.09.2019
+// Created by BRC on 09.08.2019 - 10.09.2019
 
 // Simple imap viewer
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -51,7 +51,6 @@ DCL-PR Main EXTPGM('IMAPVWRG');
 END-PR;
 
 
-/INCLUDE QRPGLECPY,QUSCMDLN
 /INCLUDE QRPGLECPY,SOCKET_H
 /INCLUDE QRPGLECPY,GSKSSL_H
 /INCLUDE QRPGLECPY,ERRNO_H
@@ -60,21 +59,14 @@ END-PR;
 
 /INCLUDE QRPGLECPY,BOOLIC
 /INCLUDE QRPGLECPY,HEX_COLORS
-DCL-C FM_A 'A';
-DCL-C FM_END '*';
-DCL-C DEFAULT_PORT 143;
-DCL-C TLS_PORT 993;
-DCL-C MAX_ROWS_TO_FETCH 60;
-DCL-C LOCAL 0;
-DCL-C UTF8 1208;
-DCL-C ASCII 1252;
-DCL-C CRLF X'0D25';
 
 
+/INCLUDE QRPGLECPY,IMAPVW_H
 /INCLUDE QRPGLECPY,PSDS
 DCL-S RecordNumber UNS(10) INZ;
 DCL-S PgmQueue CHAR(10) INZ('MAIN');
 DCL-S CallStack INT(10) INZ;
+
 
 DCL-DS This QUALIFIED;
   PictureControl CHAR(1) INZ(FM_A);
@@ -100,33 +92,6 @@ DCL-DS WSDS QUALIFIED;
   SubfileMore IND POS(23);
 END-DS;
 
-DCL-DS LogInDataDS_T QUALIFIED TEMPLATE;
-  Host CHAR(64);
-  User CHAR(64);
-  Password CHAR(64);
-  UseTLS IND;
-  Port UNS(5);
-END-DS;
-
-DCL-DS SocketDS_T QUALIFIED TEMPLATE;
-  ConnectTo POINTER;
-  SocketHandler INT(10);
-  Address UNS(10);
-  AddressLength INT(10);
-END-DS;
-
-DCL-DS GSKDS_T QUALIFIED TEMPLATE;
-  Environment POINTER;
-  SecureHandler POINTER;
-END-DS;
-
-DCL-DS MailDS_T QUALIFIED TEMPLATE;
-  Sender CHAR(128);
-  SendDate CHAR(25);
-  Subject CHAR(1024);
-  UnseenFlag IND;
-END-DS;
-
 
 //#########################################################################
 DCL-PROC Main;
@@ -143,6 +108,7 @@ DCL-PROC Main;
  /INCLUDE QRPGLECPY,SQLOPTIONS
 
  Reset This;
+ *INLR = TRUE;
 
  system('CRTDTAQ DTAQ(QTEMP/IMAPVW) MAXLEN(80)');
  system('OVRDSPF FILE(IMAPVWDF) OVRSCOPE(*ACTGRPDFN) DTAQ(QTEMP/IMAPVW)');
@@ -156,7 +122,12 @@ DCL-PROC Main;
    Select;
 
      When ( This.PictureControl = FM_A );
-       loopFM_A(pHost :pUser :pPassword :pUseTLS :pPort :pRefreshSeconds);
+       Monitor;
+         loopFM_A(pHost :pUser :pPassword :pUseTLS :pPort :pRefreshSeconds);
+         On-Error;
+           This.PictureControl = FM_END;
+           sendJobLog(PSDS.MessageID + ':' + PSDS.MessageData);
+       EndMon;
 
      Other;
        This.PictureControl = FM_END;
@@ -174,6 +145,11 @@ DCL-PROC Main;
 
  Return;
 
+On-Exit;
+ If This.Connected;
+   disconnectFromHost();
+ EndIf;
+
 END-PROC;
 
 
@@ -189,6 +165,7 @@ DCL-PROC loopFM_A;
  END-PI;
 
  /INCLUDE QRPGLECPY,QRCVDTAQ
+ /INCLUDE QRPGLECPY,QUSCMDLN
 
  DCL-S Success IND INZ(TRUE);
 
@@ -558,13 +535,13 @@ DCL-PROC connectToHost;
 
  If Success;
    RC = recieveData(%Addr(Data) :%Size(Data));
-   translateData(%Addr(Data) :ASCII :LOCAL);
+   translateData(%Addr(Data) :UTF8 :LOCAL);
    Success = ( %Scan('OK' :Data) > 0 );
    If Success;
      This.DominoSpecial = ( %Scan('Domino' :Data) > 0 );
      Data = 'a LOGIN ' + %TrimR(This.LogInDataDS.User) + ' ' +
             %TrimR(This.LogInDataDS.Password) + CRLF;
-     translateData(%Addr(Data) :LOCAL :ASCII);
+     translateData(%Addr(Data) :LOCAL :UTF8);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC <= 0 );
@@ -572,7 +549,7 @@ DCL-PROC connectToHost;
        disconnectFromHost();
        Success = This.Connected;
      Else;
-       translateData(%Addr(Data) :ASCII :LOCAL);
+       translateData(%Addr(Data) :UTF8 :LOCAL);
        This.Connected = ( %Scan('OK' :Data) > 0 );
        If Not This.Connected;
          This.GlobalMessage = retrieveMessageText('E000000');
@@ -600,7 +577,7 @@ DCL-PROC disconnectFromHost;
  //-------------------------------------------------------------------------
 
  Data = 'a LOGOUT' + CRLF;
- translateData(%Addr(Data) :LOCAL :ASCII);
+ translateData(%Addr(Data) :LOCAL :UTF8);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  This.Connected = FALSE;
  cleanUp_Socket();
@@ -616,7 +593,7 @@ DCL-PROC reConnectToHost;
 
  Clear This.LogInDataDS.Password;
  Success = askForLogInData();
- 
+
  If Success And This.Connected;
    disconnectFromHost();
  EndIf;
@@ -742,14 +719,14 @@ DCL-PROC readMailsFromInbox;
  //-------------------------------------------------------------------------
 
  Data = 'a EXAMINE INBOX' + CRLF;
- translateData(%Addr(Data) :LOCAL :ASCII);
+ translateData(%Addr(Data) :LOCAL :UTF8);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  RC = recieveData(%Addr(Data) :%Size(Data));
  If ( RC <= 0 );
    This.GlobalMessage = %Str(strError(ErrNo));
    Success = FALSE;
  Else;
-   translateData(%Addr(Data) :ASCII :LOCAL);
+   translateData(%Addr(Data) :UTF8 :LOCAL);
    If ( %Scan('NO EXAMINE' :Data) > 0 );
      This.GlobalMessage = retrieveMessageText('E000001');
      Success = FALSE;
@@ -765,11 +742,11 @@ DCL-PROC readMailsFromInbox;
  If Success And ( This.RecordsFound > 0 );
    For a = This.RecordsFound DownTo 1;
      Data = 'a FETCH ' + %Char(a) + ' (FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])' + CRLF;
-     translateData(%Addr(Data) :LOCAL :ASCII);
+     translateData(%Addr(Data) :LOCAL :UTF8);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = recieveData(%Addr(Data) :%Size(Data));
      If ( RC > 0 );
-       translateData(%Addr(Data) :ASCII :LOCAL);
+       translateData(%Addr(Data) :UTF8 :LOCAL);
        If ( %Scan('From' :Data) > 0 );
          If ( b = MAX_ROWS_TO_FETCH );
            Leave;
@@ -956,18 +933,36 @@ DCL-PROC sendStatus;
  END-PI;
 
  /INCLUDE QRPGLECPY,QMHSNDPM
+ /UNDEFINE API_QMHSNDPM
 
- DCL-DS MessageDS QUALIFIED INZ;
-   Length INT(10);
-   Key CHAR(4);
-   Error CHAR(128);
- END-DS;
+ DCL-DS MessageDS LIKEDS(MessageDS_T) INZ;
  //-------------------------------------------------------------------------
 
  MessageDS.Length = %Len(%TrimR(pMessage));
  If ( MessageDS.Length >= 0 );
-   sendProgramMessage('CPF9897'  :'QCPFMSG   *LIBL' :pMessage :MessageDS.Length
+   sendProgramMessage('CPF9897' :CPFMSG :pMessage :MessageDS.Length
                       :'*STATUS' :'*EXT' :0 :MessageDS.Key :MessageDS.Error);
+ EndIf;
+
+END-PROC;
+
+
+//**************************************************************************
+DCL-PROC sendJobLog;
+ DCL-PI *N;
+   pMessage CHAR(256) CONST;
+ END-PI;
+
+ /INCLUDE QRPGLECPY,QMHSNDPM
+ /UNDEFINE API_QMHSNDPM
+
+ DCL-DS MessageDS LIKEDS(MessageDS_T) INZ;
+ //-------------------------------------------------------------------------
+
+ MessageDS.Length = %Len(%TrimR(pMessage));
+ If ( MessageDS.Length >= 0 );
+   sendProgramMessage('CPF9897' :CPFMSG :pMessage :MessageDS.Length
+                      :'*DIAG' :'*PGMBDY' :1 :MessageDS.Key :MessageDS.Error);
  EndIf;
 
 END-PROC;

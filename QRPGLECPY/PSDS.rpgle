@@ -1,5 +1,5 @@
 **FREE
-//- Copyright (c) 2018, 2019 Christian Brunner
+//- Copyright (c) 2019 Christian Brunner
 //-
 //- Permission is hereby granted, free of charge, to any person obtaining a copy
 //- of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,11 @@
 DCL-DS PSDS PSDS QUALIFIED;
   ProcedureName *PROC;
   Status *STATUS;
+  MessageID CHAR(7) POS(40);
+  MessageData CHAR(80) POS(91);
   JobName CHAR(10) POS(244);
   UserName CHAR(10) POS(254);
   JobNo PACKED(6 :0) POS(264);
+  ProgramName CHAR(10) POS(334);
+  ModuleName CHAR(10) POS(344);
 END-DS;
