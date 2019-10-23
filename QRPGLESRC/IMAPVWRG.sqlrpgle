@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 10.09.2019
+// Created by BRC on 09.08.2019 - 23.10.2019
 
 // Simple imap viewer
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -55,6 +55,7 @@ END-PR;
 /INCLUDE QRPGLECPY,GSKSSL_H
 /INCLUDE QRPGLECPY,ERRNO_H
 /INCLUDE QRPGLECPY,SYSTEM
+/INCLUDE QRPGLECPY,QMHSNDPM
 
 
 /INCLUDE QRPGLECPY,BOOLIC
@@ -63,34 +64,6 @@ END-PR;
 
 /INCLUDE QRPGLECPY,IMAPVW_H
 /INCLUDE QRPGLECPY,PSDS
-DCL-S RecordNumber UNS(10) INZ;
-DCL-S PgmQueue CHAR(10) INZ('MAIN');
-DCL-S CallStack INT(10) INZ;
-
-
-DCL-DS This QUALIFIED;
-  PictureControl CHAR(1) INZ(FM_A);
-  RefreshSeconds PACKED(2 :0) INZ;
-  GlobalMessage CHAR(130) INZ;
-  RecordsFound UNS(10) INZ;
-  Connected IND INZ(FALSE);
-  DominoSpecial IND INZ(FALSE);
-  LogInDataDS LIKEDS(LogInDataDS_T) INZ;
-  SocketDS LIKEDS(SocketDS_T) INZ;
-  GSKDS LIKEDS(GSKDS_T) INZ;
-END-DS;
-
-DCL-DS WSDS QUALIFIED;
-  Exit IND POS(3);
-  Refresh IND POS(5);
-  ReConnect IND POS(6);
-  CommandLine IND POS(9);
-  Cancel IND POS(12);
-  SubfileClear IND POS(20);
-  SubfileDisplayControl IND POS(21);
-  SubfileDisplay IND POS(22);
-  SubfileMore IND POS(23);
-END-DS;
 
 
 //#########################################################################
@@ -191,7 +164,7 @@ DCL-PROC loopFM_A;
 
    clearMessages(PgmQueue :CallStack);
 
-   recieveDataQueue('IMAPVW' :'QTEMP' :IncomingData.Length :IncomingData.Data
+   receiveDataQueue('IMAPVW' :'QTEMP' :IncomingData.Length :IncomingData.Data
                     :This.RefreshSeconds);
 
    If ( IncomingData.Data = '' );
@@ -243,11 +216,6 @@ DCL-PROC initFM_A;
  END-PI;
 
  DCL-S Success IND INZ(TRUE);
-
- DCL-DS CommandVaryingParmDS_T QUALIFIED TEMPLATE;
-   Length UNS(5);
-   Data CHAR(62);
- END-DS;
  //-------------------------------------------------------------------------
 
  Reset RecordNumber;
@@ -932,10 +900,7 @@ DCL-PROC sendStatus;
    pMessage CHAR(256) CONST;
  END-PI;
 
- /INCLUDE QRPGLECPY,QMHSNDPM
- /UNDEFINE API_QMHSNDPM
-
- DCL-DS MessageDS LIKEDS(MessageDS_T) INZ;
+ DCL-DS MessageDS LIKEDS(MessageHandling_T) INZ;
  //-------------------------------------------------------------------------
 
  MessageDS.Length = %Len(%TrimR(pMessage));
@@ -953,10 +918,7 @@ DCL-PROC sendJobLog;
    pMessage CHAR(256) CONST;
  END-PI;
 
- /INCLUDE QRPGLECPY,QMHSNDPM
- /UNDEFINE API_QMHSNDPM
-
- DCL-DS MessageDS LIKEDS(MessageDS_T) INZ;
+ DCL-DS MessageDS LIKEDS(MessageHandling_T) INZ;
  //-------------------------------------------------------------------------
 
  MessageDS.Length = %Len(%TrimR(pMessage));
