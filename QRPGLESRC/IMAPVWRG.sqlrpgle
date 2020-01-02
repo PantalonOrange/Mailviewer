@@ -1,5 +1,5 @@
 **FREE
-// Copyright (c) 2019 Christian Brunner
+// Copyright (c) 2019, 2020 Christian Brunner
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -264,11 +264,12 @@ DCL-PROC initFM_A;
    Success = This.Connected;
    If Success;
      AC_Mail = This.LogInDataDS.User;
-     If This.LogInDataDS.UseTLS;
-       AC_Mail = %TrimR(AC_Mail) + ' (Secure)';
-     EndIf;
+
    Else;
      AC_Mail = retrieveMessageText('M000003');
+     WSDS.LoginColorGreen = FALSE;
+     WSDS.LoginColorYellow = FALSE;
+     WSDS.LoginColorRed = TRUE;
    EndIf;
  EndIf;
 
@@ -339,8 +340,13 @@ DCL-PROC fetchRecordsFM_A;
      RecordNumber = 1;
    EndIf;
 
- Else;
+ ElseIf ( This.RecordsFound = 0 ) And This.Connected;
+   RecordNumber = 1;
+   AS_Subfile_Line = retrieveMessageText('M000004');
+   AS_RecordNumber = RecordNumber;
+   Write IMAPVWAS;
 
+ Else;
    RecordNumber = 1;
    AS_Subfile_Line = This.GlobalMessage;
    AS_RecordNumber = RecordNumber;
@@ -357,6 +363,8 @@ DCL-PROC askForLoginData;
  DCL-S Success IND INZ(TRUE);
  //-------------------------------------------------------------------------
 
+ WSDS.WindowErrorHost = FALSE;
+ WSDS.WindowErrorUser = FALSE;
  W0_Window_Title = retrieveMessageText('C000010');
  W0_Host = This.LogInDataDS.Host;
  W0_User = This.LogInDataDS.User;
@@ -383,23 +391,21 @@ DCL-PROC askForLoginData;
      Select;
 
        When ( W0_Host = '' );
-         W0_Current_Row = 3;
+         W0_Current_Row = 2;
          W0_Current_Column = 12;
+         WSDS.WindowErrorHost = TRUE;
          Iter;
 
        When ( W0_User = '' );
-         W0_Current_Row = 4;
+         W0_Current_Row = 3;
          W0_Current_Column = 12;
+         WSDS.WindowErrorUser = TRUE;
          Iter;
-
-       When ( W0_Password = '' );
-         W0_Current_Row = 5;
+       
+       When ( Not validateMailAddress(W0_User) );
+         W0_Current_Row = 3;
          W0_Current_Column = 12;
-         Iter;
-
-       When ( W0_Use_TLS <> '*YES' ) And ( W0_Use_TLS <> '*NO' );
-         W0_Current_Row = 6;
-         W0_Current_Column = 12;
+         WSDS.WindowErrorUser = TRUE;
          Iter;
 
        Other;
@@ -503,13 +509,13 @@ DCL-PROC connectToHost;
 
  If Success;
    RC = receiveData(%Addr(Data) :%Size(Data));
-   translateData(%Addr(Data) :UTF8 :LOCAL);
+   translateData(%Addr(Data) :ASCII :LOCAL);
    Success = ( %Scan('OK' :Data) > 0 );
    If Success;
      This.DominoSpecial = ( %Scan('Domino' :Data) > 0 );
      Data = 'a LOGIN ' + %TrimR(This.LogInDataDS.User) + ' ' +
             %TrimR(This.LogInDataDS.Password) + CRLF;
-     translateData(%Addr(Data) :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :ASCII);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = receiveData(%Addr(Data) :%Size(Data));
      If ( RC <= 0 );
@@ -517,7 +523,7 @@ DCL-PROC connectToHost;
        disconnectFromHost();
        Success = This.Connected;
      Else;
-       translateData(%Addr(Data) :UTF8 :LOCAL);
+       translateData(%Addr(Data) :ASCII :LOCAL);
        This.Connected = ( %Scan('OK' :Data) > 0 );
        If Not This.Connected;
          This.GlobalMessage = retrieveMessageText('E000000');
@@ -545,7 +551,7 @@ DCL-PROC disconnectFromHost;
  //-------------------------------------------------------------------------
 
  Data = 'a LOGOUT' + CRLF;
- translateData(%Addr(Data) :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :ASCII);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  This.Connected = FALSE;
  cleanUp_Socket();
@@ -571,11 +577,14 @@ DCL-PROC reConnectToHost;
    Success = This.Connected;
    If Success;
      AC_Mail = This.LogInDataDS.User;
-     If This.LogInDataDS.UseTLS;
-       AC_Mail = %TrimR(AC_Mail) + ' (Secure)';
-     EndIf;
+     WSDS.LoginColorGreen = This.LogInDataDS.UseTLS;
+     WSDS.LoginColorYellow = Not This.LogInDataDS.UseTLS;
+     WSDS.LoginColorRed = FALSE;
    Else;
      AC_Mail = retrieveMessageText('M000003');
+     WSDS.LoginColorGreen = FALSE;
+     WSDS.LoginColorYellow = FALSE;
+     WSDS.LoginColorRed = TRUE;
    EndIf;
  EndIf;
 
@@ -687,14 +696,14 @@ DCL-PROC readMailsFromInbox;
  //-------------------------------------------------------------------------
 
  Data = 'a EXAMINE INBOX' + CRLF;
- translateData(%Addr(Data) :LOCAL :UTF8);
+ translateData(%Addr(Data) :LOCAL :ASCII);
  sendData(%Addr(Data) :%Len(%TrimR(Data)));
  RC = receiveData(%Addr(Data) :%Size(Data));
  If ( RC <= 0 );
    This.GlobalMessage = %Str(strError(ErrNo));
    Success = FALSE;
  Else;
-   translateData(%Addr(Data) :UTF8 :LOCAL);
+   translateData(%Addr(Data) :ASCII :LOCAL);
    If ( %Scan('NO EXAMINE' :Data) > 0 );
      This.GlobalMessage = retrieveMessageText('E000001');
      Success = FALSE;
@@ -710,11 +719,11 @@ DCL-PROC readMailsFromInbox;
  If Success And ( This.RecordsFound > 0 );
    For a = This.RecordsFound DownTo 1;
      Data = 'a FETCH ' + %Char(a) + ' (FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])' + CRLF;
-     translateData(%Addr(Data) :LOCAL :UTF8);
+     translateData(%Addr(Data) :LOCAL :ASCII);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = receiveData(%Addr(Data) :%Size(Data));
      If ( RC > 0 );
-       translateData(%Addr(Data) :UTF8 :LOCAL);
+       translateData(%Addr(Data) :ASCII :LOCAL);
        If ( %Scan('From' :Data) > 0 );
          If ( b = MAX_ROWS_TO_FETCH );
            Leave;
@@ -864,6 +873,24 @@ DCL-PROC retrieveCurrentUserAddress;
  EndIf;
 
  Return MailAddress;
+
+END-PROC;
+
+
+//**************************************************************************
+DCL-PROC validateMailAddress;
+ DCL-PI *N IND;
+   pMailAddress CHAR(64) CONST;
+ END-PI;
+ 
+ DCL-S Success IND INZ(FALSE);
+ //-------------------------------------------------------------------------
+
+ Exec SQL SET :Success = 
+                REGEXP_COUNT(RTRIM(:pMailAddress), 
+                             '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,20}$');
+
+ Return Success;
 
 END-PROC;
 

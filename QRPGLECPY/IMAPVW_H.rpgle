@@ -1,5 +1,5 @@
 **FREE
-//- Copyright (c) 2019 Christian Brunner
+//- Copyright (c) 2019, 2020 Christian Brunner
 //-
 //- Permission is hereby granted, free of charge, to any person obtaining a copy
 //- of this software and associated documentation files (the "Software"), to deal
@@ -94,4 +94,9 @@ DCL-DS WSDS QUALIFIED;
   SubfileDisplayControl IND POS(21);
   SubfileDisplay IND POS(22);
   SubfileMore IND POS(23);
+  LoginColorGreen IND POS(30);
+  LoginColorYellow IND POS(31);
+  LoginColorRed IND POS(32);
+  WindowErrorHost IND POS(40);
+  WindowErrorUser IND POS(41);
 END-DS;

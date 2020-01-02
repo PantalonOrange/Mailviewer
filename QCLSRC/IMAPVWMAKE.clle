@@ -70,6 +70,8 @@
                           to make a handshake with the server...')
              ADDMSGD    MSGID(M000003) MSGF(&LIB/IMAPMSG) MSG('Not +
                           connected')
+             ADDMSGD    MSGID(M000004) MSGF(&LIB/IMAPMSG) MSG('No +
+                          messages found in your inbox')
 
 /* Create objects */
              CRTCMD     CMD(&LIB/IMAPVW) PGM(&LIB/IMAPVWRG) +
