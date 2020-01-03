@@ -264,7 +264,9 @@ DCL-PROC initFM_A;
    Success = This.Connected;
    If Success;
      AC_Mail = This.LogInDataDS.User;
-
+     WSDS.LoginColorGreen = This.LogInDataDS.UseTLS;
+     WSDS.LoginColorYellow = Not This.LogInDataDS.UseTLS;
+     WSDS.LoginColorRed = FALSE;
    Else;
      AC_Mail = retrieveMessageText('M000003');
      WSDS.LoginColorGreen = FALSE;
@@ -401,7 +403,7 @@ DCL-PROC askForLoginData;
          W0_Current_Column = 12;
          WSDS.WindowErrorUser = TRUE;
          Iter;
-       
+
        When ( Not validateMailAddress(W0_User) );
          W0_Current_Row = 3;
          W0_Current_Column = 12;
@@ -882,12 +884,12 @@ DCL-PROC validateMailAddress;
  DCL-PI *N IND;
    pMailAddress CHAR(64) CONST;
  END-PI;
- 
+
  DCL-S Success IND INZ(FALSE);
  //-------------------------------------------------------------------------
 
- Exec SQL SET :Success = 
-                REGEXP_COUNT(RTRIM(:pMailAddress), 
+ Exec SQL SET :Success =
+                REGEXP_COUNT(RTRIM(:pMailAddress),
                              '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,20}$');
 
  Return Success;
