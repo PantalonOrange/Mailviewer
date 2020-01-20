@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Created by BRC on 09.08.2019 - 23.10.2019
+// Created by BRC on 09.08.2019 - 20.01.2020
 
 // Simple imap viewer
 //   I use the socket_h header from scott klement - (c) Scott Klement
@@ -318,15 +318,15 @@ DCL-PROC fetchRecordsFM_A;
    For i = 1 To This.RecordsFound;
 
      If MailDS(i).UnSeenFlag;
-       SubfileDS.Color1 = COLOR_YLW_RI;
+       SubfileDS.Color1 = COLOR_PNK;
      Else;
        SubfileDS.Color1 = COLOR_GRN;
      EndIf;
 
      SubfileDS.Sender = MailDS(i).Sender;
-     SubfileDS.Color2 = ' | ';
+     SubfileDS.Color2 = COLOR_BLU + '|' + SubfileDS.Color1;
      SubfileDS.SendDate = MailDS(i).SendDate;
-     SubfileDS.Color3 = ' | ';
+     SubfileDS.Color3 = COLOR_BLU + '|' + SubfileDS.Color1;
      SubfileDS.Subject = MailDS(i).Subject;
 
      RecordNumber += 1;
@@ -350,7 +350,7 @@ DCL-PROC fetchRecordsFM_A;
 
  Else;
    RecordNumber = 1;
-   AS_Subfile_Line = This.GlobalMessage;
+   AS_Subfile_Line = COLOR_BLU + This.GlobalMessage;
    AS_RecordNumber = RecordNumber;
    Write IMAPVWAS;
 
@@ -689,6 +689,8 @@ DCL-PROC readMailsFromInbox;
    pMailDS LIKEDS(MailDS_T) DIM(MAX_ROWS_TO_FETCH);
  END-PI;
 
+ DCL-C IMAP_FLAGS '(FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])';
+
  DCL-S Success IND INZ(TRUE);
  DCL-S a INT(10) INZ;
  DCL-S b INT(10) INZ;
@@ -720,7 +722,7 @@ DCL-PROC readMailsFromInbox;
 
  If Success And ( This.RecordsFound > 0 );
    For a = This.RecordsFound DownTo 1;
-     Data = 'a FETCH ' + %Char(a) + ' (FLAGS BODY[HEADER.FIELDS (FROM DATE SUBJECT)])' + CRLF;
+     Data = 'a FETCH ' + %Char(a) + ' ' + IMAP_FLAGS + CRLF;
      translateData(%Addr(Data) :LOCAL :ASCII);
      sendData(%Addr(Data) :%Len(%TrimR(Data)));
      RC = receiveData(%Addr(Data) :%Size(Data));
