@@ -1,6 +1,6 @@
 # MailViewer
 
-With this program you can view mails via imap and tls (IBM GSK) connection.
+With this program you can view mails over the imap-protocoll (currently only the headers). 
 Autorefreshing display is included.
 
 ![IMAPVW](https://github.com/PantalonOrange/Mailviewer/blob/master/imapvw.png)
