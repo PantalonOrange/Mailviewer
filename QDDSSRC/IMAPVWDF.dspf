@@ -35,7 +35,7 @@
                                         1100USER
                                         1112DATE EDTCDE(Y)
                                         1124TIME
-                  CURCUR         5S 0H      ALIAS(AC_CURRENTCURSOR)
+                  CURCUR         5S 0H      ALIAS(AC_CURRENT_CURSOR)
                   ACCROW         3S 0H      ALIAS(AC_CURRENT_ROW)
                   ACCCOL         3S 0H      ALIAS(AC_CURRENT_COLUMN)
                   ACCRCD        10A  H      ALIAS(AC_CURRENT_RECORD)

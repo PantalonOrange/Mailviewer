@@ -336,8 +336,8 @@ DCL-PROC fetchRecordsFM_A;
 
    EndFor;
 
-   If ( AC_CurrentCursor > 0 ) And ( AC_CurrentCursor <= RecordNumber );
-     RecordNumber = AC_CurrentCursor;
+   If ( AC_Current_Cursor > 0 ) And ( AC_Current_Cursor <= RecordNumber );
+     RecordNumber = AC_Current_Cursor;
    Else;
      RecordNumber = 1;
    EndIf;
