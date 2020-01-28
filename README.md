@@ -13,6 +13,6 @@ All copyfiles are included (QRPGLECPY)
 Caution! Alpha version
 
 ### Create objects:
-To create the objects copy the sources to your sourcefiles (qrpglesrc, qcmdsrc, etc) and compile them via seu-option "14"
+To create the objects copy the sources to your sourcefiles (qrpglesrc, qcmdsrc, etc). Change and compile the delivered CL IMAPVWMAKE and call it.
 
 
