@@ -1,5 +1,5 @@
 **FREE
-// Copyright (c) 2019, 2020 Christian Brunner
+// Copyright (c) 2019-2022 Christian Brunner
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,7 @@
 
 // Created by BRC on 09.08.2019 - 20.01.2020
 
-// Simple imap viewer
-//   I use the socket_h header from scott klement - (c) Scott Klement
-//   https://www.scottklement.com/rpg/socktut/socktut.savf
+// Simple imap viewer, without body
 
 // CAUTION: ALPHA-VERSION
 
@@ -36,34 +34,7 @@
 /INCLUDE QRPGLECPY,H_SPECS
 CTL-OPT MAIN(Main);
 
-
-DCL-F IMAPVWDF WORKSTN INDDS(WSDS) MAXDEV(*FILE) EXTFILE('IMAPVWDF') ALIAS
-               SFILE(IMAPVWAS :RecordNumber) USROPN;
-
-
-DCL-PR Main EXTPGM('IMAPVWRG');
-  Host CHAR(64) CONST;
-  User CHAR(64) CONST;
-  Password CHAR(64) CONST;
-  UseTLS IND CONST;
-  Port UNS(5) CONST;
-  RefreshSeconds PACKED(2 :0) CONST;
-END-PR;
-
-
-/INCLUDE QRPGLECPY,SOCKET_H
-/INCLUDE QRPGLECPY,GSKSSL_H
-/INCLUDE QRPGLECPY,ERRNO_H
-/INCLUDE QRPGLECPY,SYSTEM
-/INCLUDE QRPGLECPY,QMHSNDPM
-
-
-/INCLUDE QRPGLECPY,BOOLIC
-/INCLUDE QRPGLECPY,HEX_COLORS
-
-
-/INCLUDE QRPGLECPY,IMAPVW_H
-/INCLUDE QRPGLECPY,PSDS
+/INCLUDE QRPGLEH,IMAPVW_H
 
 
 //#########################################################################
@@ -251,7 +222,7 @@ DCL-PROC initFM_A;
  If ( pRefreshSeconds > 0 );
    This.RefreshSeconds = pRefreshSeconds;
  Else;
-   This.RefreshSeconds = 10;
+   This.RefreshSeconds = 60;
  EndIf;
 
  If ( This.LogInDataDS.Host = '' ) Or ( This.LogInDataDS.User = '' )
@@ -457,14 +428,14 @@ DCL-PROC connectToHost;
 
  sendStatus(retrieveMessageText('M000001'));
 
- This.SocketDS.Address = inet_Addr(%TrimR(This.LogInDataDS.Host));
+ This.SocketDS.Address = inet_Address(%TrimR(This.LogInDataDS.Host));
  If ( This.SocketDS.Address = INADDR_NONE );
-   P_HostEnt = getHostByName(%TrimR(This.LogInDataDS.Host));
-   If ( P_HostEnt = *NULL );
+   pHostEntry = getHostByName(%TrimR(This.LogInDataDS.Host));
+   If ( pHostEntry = *NULL );
      This.GlobalMessage = %Str(strError(ErrNo));
      Success = FALSE;
    Else;
-     This.SocketDS.Address = H_Addr;
+     This.SocketDS.Address = HAddress;
    EndIf;
  EndIf;
 
@@ -488,14 +459,14 @@ DCL-PROC connectToHost;
  EndIf;
 
  If Success;
-   This.SocketDS.AddressLength = %Size(SockAddr);
+   This.SocketDS.AddressLength = %Size(SocketAddress);
    This.SocketDS.ConnectTo = %Alloc(This.SocketDS.AddressLength);
 
-   P_SockAddr = This.SocketDS.ConnectTo;
-   Sin_Family = AF_INET;
-   Sin_Addr = This.SocketDS.Address;
-   Sin_Port = This.LogInDataDS.Port;
-   Sin_Zero = *ALLx'00';
+   pSocketAddress = This.SocketDS.ConnectTo;
+   SocketAddressIn.Family = AF_INET;
+   SocketAddressIn.Address = This.SocketDS.Address;
+   SocketAddressIn.Port = This.LogInDataDS.Port;
+   SocketAddressIn.Zero = *ALLx'00';
 
    If ( connect(This.SocketDS.SocketHandler :This.SocketDS.ConnectTo
                 :This.SocketDS.AddressLength) < 0 );
@@ -769,6 +740,11 @@ DCL-PROC extractFieldsFromStream;
    If ( %Scan('@' :MailDS.Sender) = 0 );
      Clear MailDS.Sender;
    EndIf;
+   MailDS.Sender = %ScanRpl('"' :'' :MailDS.Sender);
+   s = %Scan(MailDS.Sender :'<');
+   If ( s > 0 );
+     MailDS.Sender = %SubSt(MailDS.Sender :1 :(s - 1));
+   EndIf;
  EndIf;
 
  s = %Scan('Date:' :Data) + 6;
@@ -855,7 +831,7 @@ DCL-PROC cleanUp_Socket;
    gsk_Secure_Soc_Close(This.GSKDS.SecureHandler);
    gsk_Environment_Close(This.GSKDS.Environment);
  EndIf;
- close_Socket(This.SocketDS.SocketHandler);
+ closeSocket(This.SocketDS.SocketHandler);
 
 END-PROC;
 
